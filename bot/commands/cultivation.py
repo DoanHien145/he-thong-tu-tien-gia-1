@@ -4,6 +4,7 @@ from discord import app_commands
 from discord.ext import commands
 from bot.config import REALMS
 from bot.logger import logger
+from bot.commands.economy import record_activity
 
 class CultivationCog(commands.Cog):
     def __init__(self, bot):
@@ -17,6 +18,9 @@ class CultivationCog(commands.Cog):
 
         discord_id = str(interaction.user.id)
         username = interaction.user.display_name
+
+        # Record activity for quests
+        record_activity(discord_id, "tu_luyen")
 
         player = await self.bot.excel_manager.get_or_create_player(discord_id, username)
 
@@ -86,6 +90,7 @@ class CultivationCog(commands.Cog):
         buff_notice = f"\n⚡ *Đã kích hoạt Buff Đột Phát dược lực: +{buff_val}% cơ duyên!*" if buff_val > 0 else ""
 
         if current_exp >= req_exp:
+            record_activity(discord_id, "dot_pha")
             # Advance realm
             updated = await self.bot.excel_manager.update_player(discord_id, {
                 "Cảnh giới": next_realm,
@@ -128,6 +133,9 @@ class CultivationCog(commands.Cog):
 
         discord_id = str(interaction.user.id)
         username = interaction.user.display_name
+
+        # Record activity for quests
+        record_activity(discord_id, "diem_danh")
 
         # Get or create player first
         await self.bot.excel_manager.get_or_create_player(discord_id, username)

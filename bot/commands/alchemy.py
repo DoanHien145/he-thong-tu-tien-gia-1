@@ -3,6 +3,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from bot.logger import logger
+from bot.commands.economy import record_activity
 
 RECIPES = {
     "Luyện Khí Đan": {
@@ -130,6 +131,9 @@ class AlchemyCog(commands.Cog):
         discord_id = str(interaction.user.id)
         username = interaction.user.display_name
 
+        # Record activity for quests
+        record_activity(discord_id, "che_dan")
+
         if not ten_dan:
             # Show recipe book
             embed = discord.Embed(
@@ -241,7 +245,8 @@ class AlchemyCog(commands.Cog):
         discord_id = str(interaction.user.id)
         username = interaction.user.display_name
 
-        matched_dan = None
+        # Record activity for quests
+        record_activity(discord_id, "dung_dan")
         for dan_name in DAN_EFFECTS:
             if ten_dan.strip().lower() in dan_name.lower():
                 matched_dan = dan_name
