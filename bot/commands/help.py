@@ -84,6 +84,13 @@ class HelpCog(commands.Cog):
                 ("⚔️ /tu_luyen", "Tiến hành tu luyện để nhận EXP ngẫu nhiên."),
                 ("⬆️ /dot_pha", "Thử đột phá lên cảnh giới mới nếu đủ EXP."),
                 ("🎁 /diem_danh", "Điểm danh hằng ngày để nhận Linh Thạch."),
+                ("🏪 /shop", "Xem Bảo Các Tông Môn — Cửa hàng Linh Đan & Nguyên Liệu."),
+                ("🛒 /mua", "Mua Linh Đan hoặc Nguyên Liệu từ Bảo Các Tông Môn."),
+                ("📜 /nhiemvu", "Bảng Nhiệm Vụ Hoạt Động Tông Môn — Hoàn thành để nhận thưởng!"),
+                ("⚡ /sukien", "Tham gia Sự Kiện Ngẫu Nhiên Tông Môn thử vận may nhận cơ duyên."),
+                ("🎒 /tui_do", "Xem Túi Đồ Linh Đan & Nguyên Liệu hiện có."),
+                ("🔥 /che_dan", "Luyện chế Linh Đan từ nguyên liệu trong Túi Đồ."),
+                ("💊 /dung_dan", "Sử dụng Linh Đan tăng Tu Vi / Buff Đột Phá."),
                 ("🏆 /top", "Xem bảng xếp hạng tu sĩ mạnh nhất."),
                 ("💰 /linhthach", "Xem số Linh Thạch hiện có."),
                 ("📖 /help", "Hiển thị bí kíp danh sách các lệnh Tông Môn.")

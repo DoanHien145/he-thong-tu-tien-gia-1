@@ -215,28 +215,66 @@ class EconomyCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.event_cooldowns: dict[str, float] = {}  # discord_id -> timestamp
+        self.shop_last_refresh: float = 0
+        self.shop_stock: dict[str, dict] = {}  # item_name -> {"price": int, "stock": int, "max_stock": int, "type": str, "desc": str}
 
-    @app_commands.command(name="shop", description="Xem Bảo Các Tông Môn — Cửa hàng Linh Đan & Nguyên Liệu")
+    def refresh_shop_if_needed(self):
+        now = time.time()
+        # Reset every 5 minutes (300 seconds)
+        if now - self.shop_last_refresh >= 300 or not self.shop_stock:
+            self.shop_last_refresh = now
+            self.shop_stock = {}
+            all_items = list(SHOP_ITEMS.items())
+            # Randomly select 4 to 7 items to sell
+            num_items = random.randint(4, min(7, len(all_items)))
+            chosen_items = random.sample(all_items, num_items)
+
+            for name, info in chosen_items:
+                stock_qty = random.randint(1, 8)
+                self.shop_stock[name] = {
+                    "price": info["price"],
+                    "stock": stock_qty,
+                    "max_stock": stock_qty,
+                    "type": info["type"],
+                    "desc": info["desc"]
+                }
+
+    def get_time_until_reset(self) -> str:
+        now = time.time()
+        remaining = max(0, int(300 - (now - self.shop_last_refresh)))
+        m, s = divmod(remaining, 60)
+        return f"{m}m {s}s"
+
+    @app_commands.command(name="shop", description="Xem Bảo Các Tông Môn — Cửa hàng Linh Đan & Nguyên Liệu (Reset 5p/lần)")
     async def shop(self, interaction: discord.Interaction):
         if self.bot.channel_id and interaction.channel_id != self.bot.channel_id:
             await interaction.response.send_message("❌ Lệnh này chỉ hoạt động trong kênh tông môn quy định!", ephemeral=True)
             return
 
+        self.refresh_shop_if_needed()
+        reset_time = self.get_time_until_reset()
+
         embed = discord.Embed(
-            title="🏪 Bảo Các Tông Môn — Cửa Hàng Tu Tiên",
-            description="Sử dụng Linh Thạch 💎 để mua Linh Đan & Nguyên Liệu Chế Đan!\nDùng lệnh: `/mua [tên_vật_phẩm] [số_lượng]`",
+            title="🏪 Bảo Các Tông Môn — Hàng Giới Hạn (Reset 5p/lần)",
+            description=(
+                "Bảo Các vừa nhập đợt vật phẩm mới với số lượng có hạn!\n"
+                "Sử dụng Linh Thạch 💎 để mua Linh Đan & Nguyên Liệu.\n"
+                "Dùng lệnh: `/mua [tên_vật_phẩm] [số_lượng]`\n"
+                f"⏱️ **Làm mới kho hàng sau**: `{reset_time}`"
+            ),
             color=discord.Color.gold()
         )
 
-        for name, info in SHOP_ITEMS.items():
+        for name, info in self.shop_stock.items():
             type_badge = "🧪 Linh Đan" if info["type"] == "dan" else "🌿 Dược Liệu"
+            stock_str = f"📦 Còn lại: `{info['stock']}/{info['max_stock']}` cái" if info['stock'] > 0 else "❌ **ĐÃ HẾT HÀNG**"
             embed.add_field(
                 name=f"{type_badge} {name} — Giá: `{info['price']}` 💎",
-                value=f"└ *{info['desc']}*",
+                value=f"└ *{info['desc']}*\n└ {stock_str}",
                 inline=False
             )
 
-        embed.set_footer(text="Bảo Các Tông Môn • Mua sắm uy tín, bảo đảm chất lượng")
+        embed.set_footer(text=f"Bảo Các Tông Môn • Tự động đổi hàng & số lượng ngẫu nhiên sau 5 phút (Còn: {reset_time})")
         await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name="mua", description="Mua Linh Đan hoặc Nguyên Liệu từ Bảo Các Tông Môn")
@@ -253,20 +291,42 @@ class EconomyCog(commands.Cog):
             await interaction.response.send_message("❌ Số lượng mua phải lớn hơn 0!", ephemeral=True)
             return
 
+        self.refresh_shop_if_needed()
+        reset_time = self.get_time_until_reset()
+
         matched_item = None
-        for item_name in SHOP_ITEMS:
+        for item_name in self.shop_stock:
             if vat_pham.strip().lower() in item_name.lower():
                 matched_item = item_name
                 break
 
         if not matched_item:
             await interaction.response.send_message(
-                f"❌ Không tìm thấy vật phẩm **{vat_pham}** trong Bảo Các. Dùng `/shop` để xem danh sách!",
+                f"❌ Bảo Các hiện không bán hoặc chưa có vật phẩm **{vat_pham}** trong đợt này!\n"
+                f"Dùng `/shop` để xem các món đang sẵn hàng. Đợt hàng mới sẽ về sau `{reset_time}`.",
                 ephemeral=True
             )
             return
 
-        item_info = SHOP_ITEMS[matched_item]
+        item_info = self.shop_stock[matched_item]
+        available_stock = item_info["stock"]
+
+        if available_stock <= 0:
+            await interaction.response.send_message(
+                f"❌ Vật phẩm **{matched_item}** đã hết hàng hoàn toàn trong Bảo Các đợt này!\n"
+                f"Vui lòng đợi đợt nhập hàng tiếp theo sau `{reset_time}`.",
+                ephemeral=True
+            )
+            return
+
+        if so_luong > available_stock:
+            await interaction.response.send_message(
+                f"❌ Bảo Các hiện chỉ còn **{available_stock}x {matched_item}** (không đủ {so_luong})!\n"
+                f"Vui lòng điều chỉnh lại số lượng mua.",
+                ephemeral=True
+            )
+            return
+
         total_cost = item_info["price"] * so_luong
 
         player = await self.bot.excel_manager.get_or_create_player(discord_id, username)
@@ -289,6 +349,9 @@ class EconomyCog(commands.Cog):
         # Record activity for shopping quest
         record_activity(discord_id, "mua_shop")
 
+        # Deduct stock
+        self.shop_stock[matched_item]["stock"] -= so_luong
+
         # Deduct cost & Add item to inventory
         await self.bot.excel_manager.add_linh_thach(discord_id, -total_cost)
         await self.bot.excel_manager.add_item(discord_id, matched_item, so_luong)
@@ -298,9 +361,10 @@ class EconomyCog(commands.Cog):
         embed = discord.Embed(
             title="🛒 Mua Sắm Thành Công!",
             description=(
-                f"🎉 **{player.get('Tên')}** đã mua **{so_luong}x {matched_item}** từ Bảo Các!\n"
+                f"🎉 **{player.get('Tên')}** đã mua thành công **{so_luong}x {matched_item}** từ Bảo Các!\n"
                 f"💸 Đã thanh toán: `{total_cost}` 💎 Linh Thạch\n"
-                f"💎 Linh Thạch còn lại: `{updated_player.get('Linh thạch')}` 💎\n\n"
+                f"💎 Linh Thạch còn lại: `{updated_player.get('Linh thạch')}` 💎\n"
+                f"📦 Tồn kho còn lại trong Bảo Các: `{self.shop_stock[matched_item]['stock']}` cái\n\n"
                 f"🎒 Vật phẩm đã nằm trong túi đồ! Dùng `/tui_do` để kiểm tra hoặc `/dung_dan` để sử dụng."
             ),
             color=discord.Color.green()

@@ -65,6 +65,16 @@ class TongMonBot(commands.Bot):
         logger.info(f"User Login: Active in Guild ID={self.guild_id or 'Global'}, Restricted Channel ID={self.channel_id}")
         logger.info("Tông Môn Đại Lão Bot is ready to serve disciples!")
 
+        # Ensure instant slash command availability in all joined guilds
+        if not self.guild_id and self.guilds:
+            for guild in self.guilds:
+                try:
+                    self.tree.copy_global_to(guild=guild)
+                    synced = await self.tree.sync(guild=guild)
+                    logger.info(f"Synced {len(synced)} slash commands instantly to guild: {guild.name} (ID: {guild.id})")
+                except Exception as e:
+                    logger.error(f"Error syncing commands to guild {guild.id}: {e}")
+
         # Set presence
         activity = discord.Activity(
             type=discord.ActivityType.listening,
@@ -85,30 +95,32 @@ class TongMonBot(commands.Bot):
         if self.channel_id and message.channel.id != self.channel_id:
             return
 
-        # If user sent a message without slash prefix, treat as natural language query to AI
+        # Check if user sent a message starting with "." prompt trigger for AI response
         content = message.content.strip()
-        if not content.startswith("/") and not content.startswith("!"):
-            # Trigger typing indicator while querying AI
-            async with message.channel.typing():
-                discord_id = str(message.author.id)
-                display_name = message.author.display_name
+        if content.startswith("."):
+            query = content[1:].strip()
+            if query:
+                # Trigger typing indicator while querying AI
+                async with message.channel.typing():
+                    discord_id = str(message.author.id)
+                    display_name = message.author.display_name
 
-                # Auto register if new
-                await self.excel_manager.get_or_create_player(discord_id, display_name)
+                    # Auto register if new
+                    await self.excel_manager.get_or_create_player(discord_id, display_name)
 
-                # Fetch all Excel players for context
-                all_players = await self.excel_manager.get_all_players()
+                    # Fetch all Excel players for context
+                    all_players = await self.excel_manager.get_all_players()
 
-                # Get AI answer
-                ai_reply = await self.ai_handler.answer_question(
-                    question=content,
-                    user_discord_id=discord_id,
-                    user_display_name=display_name,
-                    excel_data=all_players
-                )
+                    # Get AI answer
+                    ai_reply = await self.ai_handler.answer_question(
+                        question=query,
+                        user_discord_id=discord_id,
+                        user_display_name=display_name,
+                        excel_data=all_players
+                    )
 
-                await message.reply(ai_reply, mention_author=True)
-                logger.info(f"AI Handled Query from {display_name}: '{content[:30]}...'")
+                    await message.reply(ai_reply, mention_author=True)
+                    logger.info(f"AI Handled Query from {display_name}: '{query[:30]}...'")
 
         await self.process_commands(message)
 

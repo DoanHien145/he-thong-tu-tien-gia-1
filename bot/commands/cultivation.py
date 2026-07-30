@@ -1,4 +1,5 @@
 import random
+import time
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -9,8 +10,9 @@ from bot.commands.economy import record_activity
 class CultivationCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.cooldowns: dict[str, float] = {}
 
-    @app_commands.command(name="tu_luyen", description="Tiến hành bế quan tu luyện để nhận EXP ngẫu nhiên")
+    @app_commands.command(name="tu_luyen", description="Tiến hành bế quan tu luyện để nhận EXP ngẫu nhiên (Hồi chiêu 20s)")
     async def tu_luyen(self, interaction: discord.Interaction):
         if self.bot.channel_id and interaction.channel_id != self.bot.channel_id:
             await interaction.response.send_message("❌ Lệnh này chỉ hoạt động trong kênh tông môn quy định!", ephemeral=True)
@@ -18,6 +20,21 @@ class CultivationCog(commands.Cog):
 
         discord_id = str(interaction.user.id)
         username = interaction.user.display_name
+
+        # Cooldown check (20 seconds)
+        now = time.time()
+        last_time = self.cooldowns.get(discord_id, 0)
+        cooldown_sec = 20
+        if now - last_time < cooldown_sec:
+            remaining = int(cooldown_sec - (now - last_time))
+            await interaction.response.send_message(
+                f"⏳ **{username}** đang vận chuyển đại chu thiên, công lực chưa hồi phục!\n"
+                f"Vui lòng đợi **{remaining} giây** nữa mới có thể tiếp tục tu luyện.",
+                ephemeral=True
+            )
+            return
+
+        self.cooldowns[discord_id] = now
 
         # Record activity for quests
         record_activity(discord_id, "tu_luyen")

@@ -15,8 +15,15 @@ Bot Discord đóng vai trò như **Hệ Thống Tu Tiên** trong các bộ truy�
 3. **Hệ Thống Lệnh Tu Tiên (Slash Commands)**:
    - `👤 /thongtin`: Xem chi tiết chỉ số tu vi, cảnh giới, linh căn.
    - `⚔️ /tu_luyen`: Bế quan tích lũy EXP ngẫu nhiên (+30~80 EXP).
-   - `⬆️ /dot_pha`: Kiểm tra EXP và tiến cấp cảnh giới (Luyện Khí 1 -> Luyện Khí 2 -> ... -> Trúc Cơ -> Kim Đan -> Nguyên Anh -> Hóa Thần).
+   - `⬆️ /dot_pha`: Kiểm tra EXP và tiến cấp cảnh giới (Luyện Khí 1 -> ... -> Trúc Cơ -> Kim Đan -> Nguyên Anh -> Hóa Thần).
    - `🎁 /diem_danh`: Mỗi ngày điểm danh nhận +100 Linh Thạch.
+   - `🏪 /shop`: Bảo Các Tông Môn — Cửa hàng mua bán Linh Đan & Nguyên Liệu.
+   - `🛒 /mua [tên] [số_lượng]`: Mua Linh Đan / Dược liệu từ Bảo Các bằng Linh Thạch.
+   - `📜 /nhiemvu`: Bảng Nhiệm Vụ Hoạt Động Tông Môn — Yêu cầu hoàn thành các hoạt động (/diem_danh, /tu_luyen, /che_dan, /dung_dan, /mua, /sukien) để nhận Linh Thạch, EXP & Dược Liệu.
+   - `⚡ /sukien`: Thám hiểm bí cảnh & sự kiện ngẫu nhiên (hồi chiêu 5 phút).
+   - `🎒 /tui_do`: Xem Túi Đồ cất giữ đan dược và nguyên liệu.
+   - `🔥 /che_dan [tên_đan]`: Khai lò Luyện Đan từ nguyên liệu hái được.
+   - `💊 /dung_dan [tên_đan]`: Phục dụng đan dược tăng trực tiếp EXP / Buff Đột Phá.
    - `🏆 /top`: Bảng xếp hạng Top 10 tu sĩ có tu vi thâm hậu nhất.
    - `💰 /linhthach`: Kiểm tra túi Linh Thạch hiện có.
    - `📜 /help`: Bí kíp Thiên Cơ Các hiển thị danh sách lệnh động, phân trang thông minh với nút bấm **◀ Trước** / **Sau ▶**.
@@ -43,6 +50,8 @@ bot/
 ├── commands/
 │   ├── info.py          # /thongtin, /linhthach, /top
 │   ├── cultivation.py   # /tu_luyen, /dot_pha, /diem_danh
+│   ├── economy.py       # /shop, /mua, /nhiemvu, /sukien
+│   ├── alchemy.py       # /tui_do, /che_dan, /dung_dan
 │   ├── admin.py        # /cong_exp, /cong_linh_thach, /set_canh_gioi
 │   └── help.py         # /help động & phân trang
 │

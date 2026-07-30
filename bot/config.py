@@ -6,8 +6,11 @@ load_dotenv()
 
 # Discord Bot Configurations
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN", "")
-CHANNEL_ID = int(os.getenv("CHANNEL_ID", "0")) if os.getenv("CHANNEL_ID") else 0
-GUILD_ID = int(os.getenv("GUILD_ID", "0")) if os.getenv("GUILD_ID") else None
+channel_env = os.getenv("CHANNEL_ID", "")
+CHANNEL_ID = int(channel_env) if channel_env and channel_env.isdigit() and int(channel_env) > 0 else 0
+
+guild_env = os.getenv("GUILD_ID", "")
+GUILD_ID = int(guild_env) if guild_env and guild_env.isdigit() and int(guild_env) > 0 else None
 
 # Groq API Key for AI Answers
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", os.getenv("GEMINI_API_KEY", ""))
