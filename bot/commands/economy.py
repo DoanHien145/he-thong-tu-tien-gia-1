@@ -217,6 +217,7 @@ class EconomyCog(commands.Cog):
         self.event_cooldowns: dict[str, float] = {}  # discord_id -> timestamp
         self.shop_last_refresh: float = 0
         self.shop_stock: dict[str, dict] = {}  # item_name -> {"price": int, "stock": int, "max_stock": int, "type": str, "desc": str}
+        self.user_purchases: dict[str, dict[str, int]] = {}  # discord_id -> {item_name -> bought_qty}
 
     def refresh_shop_if_needed(self):
         now = time.time()
@@ -224,13 +225,14 @@ class EconomyCog(commands.Cog):
         if now - self.shop_last_refresh >= 300 or not self.shop_stock:
             self.shop_last_refresh = now
             self.shop_stock = {}
+            self.user_purchases = {}  # Clear per-user purchase records upon shop reset
             all_items = list(SHOP_ITEMS.items())
             # Randomly select 4 to 7 items to sell
             num_items = random.randint(4, min(7, len(all_items)))
             chosen_items = random.sample(all_items, num_items)
 
             for name, info in chosen_items:
-                stock_qty = random.randint(1, 8)
+                stock_qty = random.randint(2, 10)
                 self.shop_stock[name] = {
                     "price": info["price"],
                     "stock": stock_qty,
@@ -251,30 +253,36 @@ class EconomyCog(commands.Cog):
             await interaction.response.send_message("❌ Lệnh này chỉ hoạt động trong kênh tông môn quy định!", ephemeral=True)
             return
 
+        discord_id = str(interaction.user.id)
         self.refresh_shop_if_needed()
         reset_time = self.get_time_until_reset()
+        user_bought_map = self.user_purchases.get(discord_id, {})
 
         embed = discord.Embed(
-            title="🏪 Bảo Các Tông Môn — Hàng Giới Hạn (Reset 5p/lần)",
+            title="🏪 Bảo Các Tông Môn — Giới Hạn Mua Ngẫu Nhiên (Reset 5p/lần)",
             description=(
-                "Bảo Các vừa nhập đợt vật phẩm mới với số lượng có hạn!\n"
-                "Sử dụng Linh Thạch 💎 để mua Linh Đan & Nguyên Liệu.\n"
-                "Dùng lệnh: `/mua [tên_vật_phẩm] [số_lượng]`\n"
-                f"⏱️ **Làm mới kho hàng sau**: `{reset_time}`"
+                "Bảo Các vừa nhập đợt hàng mới với số lượng ngẫu nhiên!\n"
+                "🔒 **Quy định**: Mỗi tu sĩ chỉ được mua **tối đa 2 cái/món** trong mỗi đợt mở kho.\n"
+                "Sử dụng Linh Thạch 💎 để mua: `/mua [tên_vật_phẩm] [số_lượng]`\n"
+                f"⏱️ **Làm mới đợt hàng sau**: `{reset_time}`"
             ),
             color=discord.Color.gold()
         )
 
         for name, info in self.shop_stock.items():
             type_badge = "🧪 Linh Đan" if info["type"] == "dan" else "🌿 Dược Liệu"
-            stock_str = f"📦 Còn lại: `{info['stock']}/{info['max_stock']}` cái" if info['stock'] > 0 else "❌ **ĐÃ HẾT HÀNG**"
+            stock_str = f"📦 Kho tổng: `{info['stock']}/{info['max_stock']}`" if info['stock'] > 0 else "❌ **ĐÃ HẾT HÀNG**"
+            bought_cnt = user_bought_map.get(name, 0)
+            user_limit = min(2, info["max_stock"])
+            user_str = f"👤 Bạn đã mua: `{bought_cnt}/{user_limit}`"
+            
             embed.add_field(
                 name=f"{type_badge} {name} — Giá: `{info['price']}` 💎",
-                value=f"└ *{info['desc']}*\n└ {stock_str}",
+                value=f"└ *{info['desc']}*\n└ {stock_str} | {user_str}",
                 inline=False
             )
 
-        embed.set_footer(text=f"Bảo Các Tông Môn • Tự động đổi hàng & số lượng ngẫu nhiên sau 5 phút (Còn: {reset_time})")
+        embed.set_footer(text=f"Bảo Các Tông Môn • Đổi ngẫu nhiên hàng & giới hạn cá nhân mỗi 5 phút (Còn: {reset_time})")
         await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name="mua", description="Mua Linh Đan hoặc Nguyên Liệu từ Bảo Các Tông Môn")
@@ -302,7 +310,7 @@ class EconomyCog(commands.Cog):
 
         if not matched_item:
             await interaction.response.send_message(
-                f"❌ Bảo Các hiện không bán hoặc chưa có vật phẩm **{vat_pham}** trong đợt này!\n"
+                f"❌ Bảo Các hiện không bán vật phẩm **{vat_pham}** trong đợt này!\n"
                 f"Dùng `/shop` để xem các món đang sẵn hàng. Đợt hàng mới sẽ về sau `{reset_time}`.",
                 ephemeral=True
             )
@@ -313,15 +321,37 @@ class EconomyCog(commands.Cog):
 
         if available_stock <= 0:
             await interaction.response.send_message(
-                f"❌ Vật phẩm **{matched_item}** đã hết hàng hoàn toàn trong Bảo Các đợt này!\n"
+                f"❌ Vật phẩm **{matched_item}** đã hết sạch hàng trong kho Bảo Các đợt này!\n"
                 f"Vui lòng đợi đợt nhập hàng tiếp theo sau `{reset_time}`.",
+                ephemeral=True
+            )
+            return
+
+        # Check Per-User Purchase Limit (Max 2 items per user per rotation)
+        user_bought_map = self.user_purchases.setdefault(discord_id, {})
+        already_bought = user_bought_map.get(matched_item, 0)
+        per_user_max = min(2, item_info["max_stock"])
+
+        if already_bought >= per_user_max:
+            await interaction.response.send_message(
+                f"❌ Bạn đã đạt giới hạn mua tối đa (**{per_user_max}x {matched_item}**) trong đợt mở kho này!\n"
+                f"Vui lòng đợi đợt mở kho tiếp theo sau `{reset_time}`.",
+                ephemeral=True
+            )
+            return
+
+        if already_bought + so_luong > per_user_max:
+            can_buy_more = per_user_max - already_bought
+            await interaction.response.send_message(
+                f"❌ Đợt này bạn chỉ được mua thêm tối đa **{can_buy_more}x {matched_item}** nữa thôi!\n"
+                f"(Giới hạn cá nhân: {per_user_max} cái/đợt 5 phút).",
                 ephemeral=True
             )
             return
 
         if so_luong > available_stock:
             await interaction.response.send_message(
-                f"❌ Bảo Các hiện chỉ còn **{available_stock}x {matched_item}** (không đủ {so_luong})!\n"
+                f"❌ Kho Bảo Các hiện chỉ còn **{available_stock}x {matched_item}**!\n"
                 f"Vui lòng điều chỉnh lại số lượng mua.",
                 ephemeral=True
             )
@@ -349,10 +379,11 @@ class EconomyCog(commands.Cog):
         # Record activity for shopping quest
         record_activity(discord_id, "mua_shop")
 
-        # Deduct stock
+        # Deduct global stock & Update user purchase count
         self.shop_stock[matched_item]["stock"] -= so_luong
+        user_bought_map[matched_item] = already_bought + so_luong
 
-        # Deduct cost & Add item to inventory
+        # Deduct cost & Add item to inventory in Excel
         await self.bot.excel_manager.add_linh_thach(discord_id, -total_cost)
         await self.bot.excel_manager.add_item(discord_id, matched_item, so_luong)
 
@@ -364,7 +395,8 @@ class EconomyCog(commands.Cog):
                 f"🎉 **{player.get('Tên')}** đã mua thành công **{so_luong}x {matched_item}** từ Bảo Các!\n"
                 f"💸 Đã thanh toán: `{total_cost}` 💎 Linh Thạch\n"
                 f"💎 Linh Thạch còn lại: `{updated_player.get('Linh thạch')}` 💎\n"
-                f"📦 Tồn kho còn lại trong Bảo Các: `{self.shop_stock[matched_item]['stock']}` cái\n\n"
+                f"👤 Lượt mua của bạn trong đợt này: `{user_bought_map[matched_item]}/{per_user_max}`\n"
+                f"📦 Tồn kho Bảo Các còn: `{self.shop_stock[matched_item]['stock']}` cái\n\n"
                 f"🎒 Vật phẩm đã nằm trong túi đồ! Dùng `/tui_do` để kiểm tra hoặc `/dung_dan` để sử dụng."
             ),
             color=discord.Color.green()

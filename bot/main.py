@@ -66,14 +66,13 @@ class TongMonBot(commands.Bot):
         logger.info("Tông Môn Đại Lão Bot is ready to serve disciples!")
 
         # Ensure instant slash command availability in all joined guilds
-        if not self.guild_id and self.guilds:
-            for guild in self.guilds:
-                try:
-                    self.tree.copy_global_to(guild=guild)
-                    synced = await self.tree.sync(guild=guild)
-                    logger.info(f"Synced {len(synced)} slash commands instantly to guild: {guild.name} (ID: {guild.id})")
-                except Exception as e:
-                    logger.error(f"Error syncing commands to guild {guild.id}: {e}")
+        for guild in self.guilds:
+            try:
+                self.tree.copy_global_to(guild=guild)
+                synced = await self.tree.sync(guild=guild)
+                logger.info(f"Synced {len(synced)} slash commands instantly to guild: {guild.name} (ID: {guild.id})")
+            except Exception as e:
+                logger.error(f"Error syncing commands to guild {guild.id}: {e}")
 
         # Set presence
         activity = discord.Activity(
@@ -81,6 +80,15 @@ class TongMonBot(commands.Bot):
             name="kinh văn Tông Môn | /help"
         )
         await self.change_presence(status=discord.Status.online, activity=activity)
+
+    async def on_guild_join(self, guild: discord.Guild):
+        """Automatically sync slash commands when joining a new server."""
+        try:
+            self.tree.copy_global_to(guild=guild)
+            synced = await self.tree.sync(guild=guild)
+            logger.info(f"On Guild Join: Synced {len(synced)} slash commands to new guild {guild.name} (ID: {guild.id})")
+        except Exception as e:
+            logger.error(f"Error syncing slash commands on guild join ({guild.id}): {e}")
 
     async def on_message(self, message: discord.Message):
         """
