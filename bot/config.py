@@ -80,22 +80,22 @@ REALMS = [
     {"name": "Chân Tiên Hậu Kỳ", "exp_required": 390000000},
     {"name": "Chân Tiên Đại Viên Mãn", "exp_required": 500000000},
 
-    {"name": "Kim Tiên", "exp_required": 650000000},
     {"name": "Kim Tiên Sơ Kỳ", "exp_required": 650000000},
     {"name": "Kim Tiên Trung Kỳ", "exp_required": 750000000},
     {"name": "Kim Tiên Hậu Kỳ", "exp_required": 850000000},
     {"name": "Kim Tiên Đại Viên Mãn", "exp_required": 1000000000},
-    {"name": "Thái Ất Kim Tiên", "exp_required": 850000000},
-    {"name": "Đại La Kim Tiên", "exp_required": 1100000000},
 
-    {"name": "Tiên Vương", "exp_required": 1500000000},
-    {"name": "Tiên Hoàng", "exp_required": 2000000000},
-    {"name": "Tiên Đế", "exp_required": 2800000000},
+    {"name": "Thái Ất Kim Tiên", "exp_required": 1200000000},
+    {"name": "Đại La Kim Tiên", "exp_required": 1600000000},
 
-    {"name": "Đạo Tổ", "exp_required": 4000000000},
-    {"name": "Thiên Đạo Chí Tôn", "exp_required": 6000000000},
-    {"name": "Vĩnh Hằng Tiên Tôn", "exp_required": 9000000000},
-    {"name": "Vô Thượng Chúa Tể", "exp_required": 13000000000},
+    {"name": "Tiên Vương", "exp_required": 2200000000},
+    {"name": "Tiên Hoàng", "exp_required": 3000000000},
+    {"name": "Tiên Đế", "exp_required": 4200000000},
+
+    {"name": "Đạo Tổ", "exp_required": 6000000000},
+    {"name": "Thiên Đạo Chí Tôn", "exp_required": 8500000000},
+    {"name": "Vĩnh Hằng Tiên Tôn", "exp_required": 12000000000},
+    {"name": "Vô Thượng Chúa Tể", "exp_required": 18000000000},
 ]
 
 # Random Linh Can types for registration variety
