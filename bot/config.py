@@ -51,6 +51,7 @@ REALMS = [
     {"name": "Nguyên Anh Hậu Kỳ", "exp_required": 320000},
     {"name": "Nguyên Anh Đại Viên Mãn", "exp_required": 450000},
     {"name": "Hóa Thần Sơ Kỳ", "exp_required": 650000},
+    {"name": "Hóa Thần Trung Kỳ", "exp_required": 800000},
     {"name": "Hóa Thần Hậu Kỳ", "exp_required": 1000000},
     {"name": "Luyện Hư Sơ Kỳ", "exp_required": 2000000},
     {"name": "Luyện Hư Trung Kỳ", "exp_required": 3000000},
@@ -80,6 +81,10 @@ REALMS = [
     {"name": "Chân Tiên Đại Viên Mãn", "exp_required": 500000000},
 
     {"name": "Kim Tiên", "exp_required": 650000000},
+    {"name": "Kim Tiên Sơ Kỳ", "exp_required": 650000000},
+    {"name": "Kim Tiên Trung Kỳ", "exp_required": 750000000},
+    {"name": "Kim Tiên Hậu Kỳ", "exp_required": 850000000},
+    {"name": "Kim Tiên Đại Viên Mãn", "exp_required": 1000000000},
     {"name": "Thái Ất Kim Tiên", "exp_required": 850000000},
     {"name": "Đại La Kim Tiên", "exp_required": 1100000000},
 
