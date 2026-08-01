@@ -229,12 +229,15 @@ app.get("/api/raw-files", (req, res) => {
     "bot/main.py",
     "bot/config.py",
     "bot/logger.py",
+    "bot/db_manager.py",
     "bot/excel_manager.py",
+    "bot/import_onedrive.py",
     "bot/ai_handler.py",
     "bot/commands/info.py",
     "bot/commands/cultivation.py",
     "bot/commands/economy.py",
     "bot/commands/alchemy.py",
+    "bot/commands/events.py",
     "bot/commands/admin.py",
     "bot/commands/help.py",
     "requirements.txt",
@@ -269,6 +272,15 @@ app.get("/api/download/excel", (req, res) => {
     res.download(EXCEL_FILE_PATH, "data.xlsx");
   } else {
     res.status(404).send("File data.xlsx chưa được khởi tạo.");
+  }
+});
+
+app.get("/api/download/db", (req, res) => {
+  const dbPath = path.join(process.cwd(), "data", "cultivation.db");
+  if (fs.existsSync(dbPath)) {
+    res.download(dbPath, "cultivation.db");
+  } else {
+    res.status(404).send("File cultivation.db chưa được khởi tạo.");
   }
 });
 
@@ -396,6 +408,12 @@ app.get("/api/export-zip", async (req, res) => {
     if (fs.existsSync(EXCEL_FILE_PATH)) {
       const excelBuf = fs.readFileSync(EXCEL_FILE_PATH);
       zip.file("data/data.xlsx", excelBuf);
+    }
+
+    const dbPath = path.join(process.cwd(), "data", "cultivation.db");
+    if (fs.existsSync(dbPath)) {
+      const dbBuf = fs.readFileSync(dbPath);
+      zip.file("data/cultivation.db", dbBuf);
     }
 
     const zipBuffer = await zip.generateAsync({ type: "nodebuffer" });

@@ -36,6 +36,7 @@ class TongMonBot(commands.Bot):
             "bot.commands.cultivation",
             "bot.commands.economy",
             "bot.commands.alchemy",
+            "bot.commands.events",
             "bot.commands.admin",
             "bot.commands.help"
         ]

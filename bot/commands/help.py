@@ -5,21 +5,26 @@ from bot.logger import logger
 
 COMMAND_EMOJIS = {
     "thongtin": "👤",
-    "tu_luyen": "⚔️",
-    "dot_pha": "⬆️",
+    "tu_luyen": "🧘‍♂️",
+    "song_tu": "💖",
+    "dot_pha": "⚡",
     "diem_danh": "🎁",
     "top": "🏆",
     "linhthach": "💰",
     "shop": "🏪",
     "mua": "🛒",
+    "boss": "👹",
+    "tancong": "⚔️",
     "nhiemvu": "📜",
-    "sukien": "⚡",
+    "thamgia": "🌌",
+    "nhan_co_duyen": "🎁",
     "tui_do": "🎒",
     "che_dan": "🔥",
     "dung_dan": "💊",
     "cong_exp": "🛠️",
     "cong_linh_thach": "🛠️",
     "set_canh_gioi": "🛠️",
+    "tai_data": "📦",
     "help": "📖"
 }
 
@@ -63,10 +68,8 @@ class HelpCog(commands.Cog):
             await interaction.response.send_message("❌ Lệnh này chỉ hoạt động trong kênh tông môn quy định!", ephemeral=True)
             return
 
-        # Dynamically fetch registered application slash commands
         all_app_commands = self.bot.tree.get_commands()
 
-        # Build list of command info
         command_list = []
         for cmd in all_app_commands:
             name = cmd.name
@@ -77,27 +80,30 @@ class HelpCog(commands.Cog):
                 "desc": desc
             })
 
-        # Fallback list if tree commands not synced yet locally
         if not command_list:
             default_cmds = [
                 ("👤 /thongtin", "Xem thông tin nhân vật tu tiên."),
-                ("⚔️ /tu_luyen", "Tiến hành tu luyện để nhận EXP ngẫu nhiên."),
-                ("⬆️ /dot_pha", "Thử đột phá lên cảnh giới mới nếu đủ EXP."),
-                ("🎁 /diem_danh", "Điểm danh hằng ngày để nhận Linh Thạch."),
-                ("🏪 /shop", "Xem Bảo Các Tông Môn — Cửa hàng Linh Đan & Nguyên Liệu."),
-                ("🛒 /mua", "Mua Linh Đan hoặc Nguyên Liệu từ Bảo Các Tông Môn."),
-                ("📜 /nhiemvu", "Bảng Nhiệm Vụ Hoạt Động Tông Môn — Hoàn thành để nhận thưởng!"),
-                ("⚡ /sukien", "Tham gia Sự Kiện Ngẫu Nhiên Tông Môn thử vận may nhận cơ duyên."),
+                ("🧘‍♂️ /tu_luyen", "Bế quan tu luyện nhận EXP (CD 1 phút)."),
+                ("💖 /song_tu", "Mời đồng đạo song tu gia tăng tu vi vượt trội."),
+                ("⚡ /dot_pha", "Thử đột phá Lôi Kiếp & vượt qua nguy cơ Tâm Ma."),
+                ("🎁 /diem_danh", "Điểm danh hằng ngày nhận 150 Linh Thạch & Dược Liệu."),
+                ("👹 /boss", "Xem thông tin Thượng Cổ Thiên Ma Boss & BXH sát thương."),
+                ("⚔️ /tancong", "Tấn công Boss Thế Giới để tích lũy sát thương & linh thạch."),
+                ("🏪 /shop", "Xem Bảo Các Tông Môn (Reset kho ngẫu nhiên mỗi 5p)."),
+                ("🛒 /mua", "Mua Linh Đan hoặc Nguyên Liệu từ Bảo Các."),
+                ("📜 /nhiemvu", "Bảng Nhiệm Vụ Hoạt Động Tông Môn."),
+                ("🌌 /thamgia", "Tham gia sự kiện nhóm đang diễn ra."),
+                ("🎁 /nhan_co_duyen", "Nhanh tay nhận cơ duyên đơn lẻ xuất hiện trong kênh."),
                 ("🎒 /tui_do", "Xem Túi Đồ Linh Đan & Nguyên Liệu hiện có."),
                 ("🔥 /che_dan", "Luyện chế Linh Đan từ nguyên liệu trong Túi Đồ."),
-                ("💊 /dung_dan", "Sử dụng Linh Đan tăng Tu Vi / Buff Đột Phá."),
+                ("💊 /dung_dan", "Cắn Linh Đan tăng Tu Vi / Buff Đột Phá / Hồi HP."),
                 ("🏆 /top", "Xem bảng xếp hạng tu sĩ mạnh nhất."),
                 ("💰 /linhthach", "Xem số Linh Thạch hiện có."),
+                ("📦 /tai_data", "[Admin/Owner] Tải file dữ liệu SQLite (cultivation.db) & Excel."),
                 ("📖 /help", "Hiển thị bí kíp danh sách các lệnh Tông Môn.")
             ]
             command_list = [{"name": c[0], "desc": c[1]} for c in default_cmds]
 
-        # Split commands into chunks of 8 per page
         CHUNK_SIZE = 8
         chunks = [command_list[i:i + CHUNK_SIZE] for i in range(0, len(command_list), CHUNK_SIZE)]
 
@@ -108,7 +114,7 @@ class HelpCog(commands.Cog):
             embed = discord.Embed(
                 title="📜 Thiên Cơ Các — Danh Sách Lệnh Tông Môn",
                 description="Hệ thống bí kíp pháp bảo lệnh hỗ trợ tu sĩ:",
-                color=discord.Color.from_rgb(0, 204, 153) # Xianxia Jade
+                color=discord.Color.from_rgb(0, 204, 153)
             )
 
             for item in chunk:
@@ -120,7 +126,7 @@ class HelpCog(commands.Cog):
 
             embed.add_field(
                 name="────────────────────",
-                value="💡 **Lưu ý**: Bot chỉ hoạt động & trả lời trong đúng kênh tông môn được chỉ định.\n💬 Bạn có thể nhắn trực tiếp câu hỏi (ví dụ: *'Ta còn bao nhiêu EXP?'*) để **Đại Lão Ẩn Mình** giải đáp!",
+                value="💡 **Lưu ý**: Bot hoạt động trong đúng kênh tông môn quy định.\n💬 Bạn có thể gõ câu hỏi bắt đầu bằng dấu chấm (ví dụ: *.độ kiếp là gì*) để **Đại Lão AI** giải đáp!",
                 inline=False
             )
 
@@ -136,8 +142,6 @@ class HelpCog(commands.Cog):
             await interaction.response.send_message(embed=pages[0], view=view)
         else:
             await interaction.response.send_message(embed=pages[0])
-
-        logger.info(f"Command Executed: /help by {interaction.user.display_name}")
 
 async def setup(bot):
     await bot.add_cog(HelpCog(bot))
