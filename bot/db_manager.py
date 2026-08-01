@@ -458,6 +458,9 @@ class DatabaseManager:
     async def get_top_players(self, limit: int = 10) -> list[dict]:
         return await asyncio.to_thread(self._sync_get_top_players, limit)
 
+    async def get_top_cultivators(self, limit: int = 10) -> list[dict]:
+        return await self.get_top_players(limit)
+
     def _sync_get_top_players(self, limit: int = 10) -> list[dict]:
         conn = self._get_connection()
         cursor = conn.cursor()
@@ -467,7 +470,7 @@ class DatabaseManager:
         return [self._format_player_dict(dict(r)) for r in rows]
 
     # --- World Boss Methods ---
-    async def get_daily_boss() -> dict:
+    async def get_daily_boss(self) -> dict:
         return await asyncio.to_thread(self._sync_get_daily_boss)
 
     def _sync_get_daily_boss(self) -> dict:
@@ -582,3 +585,7 @@ class DatabaseManager:
         conn.close()
         os.makedirs(os.path.dirname(excel_path), exist_ok=True)
         wb.save(excel_path)
+
+    async def save(self):
+        """Export current SQLite state to data/data.xlsx."""
+        await self.export_to_excel()
