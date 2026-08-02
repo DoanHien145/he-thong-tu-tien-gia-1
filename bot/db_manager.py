@@ -499,6 +499,13 @@ class DatabaseManager:
             conn.commit()
             cursor.execute("SELECT * FROM world_boss WHERE date = ?", (today,))
             row = cursor.fetchone()
+        else:
+            # Ensure immortal boss HP stays at 366769
+            if row["max_hp"] != 366769 or row["hp"] != 366769 or row["is_dead"] != 0:
+                cursor.execute("UPDATE world_boss SET hp = 366769, max_hp = 366769, is_dead = 0 WHERE date = ?", (today,))
+                conn.commit()
+                cursor.execute("SELECT * FROM world_boss WHERE date = ?", (today,))
+                row = cursor.fetchone()
 
         conn.close()
         return dict(row)
@@ -513,12 +520,11 @@ class DatabaseManager:
         conn = self._get_connection()
         cursor = conn.cursor()
 
-        new_hp = boss["max_hp"]
-        is_dead = 0
+        # Boss is immortal (HP stays at 366769, never drops, never dies)
+        immortal_hp = 366769
+        cursor.execute("UPDATE world_boss SET hp = ?, max_hp = ?, is_dead = 0 WHERE date = ?", (immortal_hp, immortal_hp, today))
 
-        cursor.execute("UPDATE world_boss SET hp = ?, is_dead = ? WHERE date = ?", (new_hp, is_dead, today))
-
-        # Update leaderboard
+        # Update damage leaderboard
         cursor.execute("""
             INSERT INTO boss_damage (date, discord_id, name, damage)
             VALUES (?, ?, ?, ?)
@@ -531,7 +537,7 @@ class DatabaseManager:
         updated_boss = dict(cursor.fetchone())
         conn.close()
 
-        return updated_boss, (is_dead == 1 and boss["is_dead"] == 0)
+        return updated_boss, False
 
     async def get_boss_leaderboard(self, limit: int = 10) -> list[dict]:
         return await asyncio.to_thread(self._sync_get_boss_leaderboard, limit)

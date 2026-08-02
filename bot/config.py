@@ -22,7 +22,7 @@ EXCEL_PATH = os.getenv("EXCEL_PATH", "data/data.xlsx")
 # Cooldown constants (in seconds)
 TU_LUYEN_COOLDOWN = 60  # 1 minute
 SUKIEN_COOLDOWN = 1200   # 20 minutes
-SONG_TU_COOLDOWN = 600   # 10 minutes
+SONG_TU_COOLDOWN = 1800  # 30 minutes
 BOSS_ATTACK_COOLDOWN = 120 # 2 minutes
 
 # Default Cultivation Stats for new players

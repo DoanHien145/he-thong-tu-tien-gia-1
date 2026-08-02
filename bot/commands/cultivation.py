@@ -35,7 +35,7 @@ class SongTuView(discord.ui.View):
         record_activity(target_id, "song_tu")
 
         # EXP Reward
-        exp_gain = random.randint(250, 500)
+        exp_gain = random.randint(1500, 3500)
         player_req, _ = await self.bot.excel_manager.add_exp(req_id, exp_gain)
         player_target, _ = await self.bot.excel_manager.add_exp(target_id, exp_gain)
 
@@ -73,6 +73,93 @@ class SongTuView(discord.ui.View):
         )
         await interaction.response.edit_message(embed=embed, view=self)
 
+class DauPhapView(discord.ui.View):
+    def __init__(self, challenger: discord.User, defender: discord.User, bot):
+        super().__init__(timeout=60)
+        self.challenger = challenger
+        self.defender = defender
+        self.bot = bot
+
+    @discord.ui.button(label="⚔️ Chấp Nhận Tỷ Thí", style=discord.ButtonStyle.danger, emoji="🔥")
+    async def accept_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.defender.id:
+            await interaction.response.send_message("❌ Lời thách đấu này không dành cho bạn!", ephemeral=True)
+            return
+
+        self.stop()
+        for item in self.children:
+            item.disabled = True
+
+        c_id = str(self.challenger.id)
+        d_id = str(self.defender.id)
+
+        p_c = await self.bot.excel_manager.get_or_create_player(c_id, self.challenger.display_name)
+        p_d = await self.bot.excel_manager.get_or_create_player(d_id, self.defender.display_name)
+
+        # Calculate combat power
+        c_realm = p_c.get("Cảnh giới", "Luyện Khí tầng 1")
+        d_realm = p_d.get("Cảnh giới", "Luyện Khí tầng 1")
+
+        c_realm_idx = next((i for i, r in enumerate(REALMS) if r["name"] == c_realm), 0)
+        d_realm_idx = next((i for i, r in enumerate(REALMS) if r["name"] == d_realm), 0)
+
+        c_exp = int(p_c.get("EXP", 0))
+        d_exp = int(p_d.get("EXP", 0))
+
+        c_power = (c_realm_idx + 1) * 3000 + c_exp + random.randint(1000, 5000)
+        d_power = (d_realm_idx + 1) * 3000 + d_exp + random.randint(1000, 5000)
+
+        record_activity(c_id, "sukien")
+        record_activity(d_id, "sukien")
+
+        reward_exp = random.randint(1500, 3000)
+        reward_lt = random.randint(1000, 2000)
+
+        if c_power >= d_power:
+            winner, loser = self.challenger, self.defender
+            w_id, l_id = c_id, d_id
+            w_power, l_power = c_power, d_power
+            w_realm, l_realm = c_realm, d_realm
+        else:
+            winner, loser = self.defender, self.challenger
+            w_id, l_id = d_id, c_id
+            w_power, l_power = d_power, c_power
+            w_realm, l_realm = d_realm, c_realm
+
+        await self.bot.excel_manager.add_exp(w_id, reward_exp)
+        await self.bot.excel_manager.add_linh_thach(w_id, reward_lt)
+        await self.bot.excel_manager.add_exp(l_id, 500)
+
+        embed = discord.Embed(
+            title="⚔️ TRẬN ĐẤU PHÁP VÕ ĐÀI KẾT THÚC!",
+            description=(
+                f"🔥 **{self.challenger.display_name}** (`{c_realm}`)  ⚔️  **{self.defender.display_name}** (`{d_realm}`)\n\n"
+                f"💥 Sét giật đùng đùng, kiếm khí hoành tảo bầu trời võ đài!\n"
+                f"🏆 **CHIẾN THẮNG**: Tu sĩ **{winner.display_name}** (Lực chiến: `{w_power:,}` vs `{l_power:,}`)\n\n"
+                f"🎁 **Thưởng thắng trận**: `+{reward_exp:,}` ✨ EXP Tu vi | `+{reward_lt:,}` 💎 Linh Thạch\n"
+                f"🛡️ **An ủi bại tướng**: `+500` ✨ EXP vì tinh thần quả cảm!"
+            ),
+            color=discord.Color.gold()
+        )
+        await interaction.response.edit_message(embed=embed, view=self)
+
+    @discord.ui.button(label="🛡️ Từ Chối / Cáo Bệnh", style=discord.ButtonStyle.secondary)
+    async def decline_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.defender.id:
+            await interaction.response.send_message("❌ Lời thách đấu này không dành cho bạn!", ephemeral=True)
+            return
+
+        self.stop()
+        for item in self.children:
+            item.disabled = True
+
+        embed = discord.Embed(
+            title="🏳️ Từ Chối Đấu Pháp",
+            description=f"**{self.defender.display_name}** cáo bệnh không lên Luyện Võ Đài. Trận tỷ thí hủy bỏ!",
+            color=discord.Color.gray()
+        )
+        await interaction.response.edit_message(embed=embed, view=self)
+
 class CultivationCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -105,8 +192,8 @@ class CultivationCog(commands.Cog):
 
         player = await self.bot.excel_manager.get_or_create_player(discord_id, username)
 
-        # Gain random EXP between 50 and 120
-        exp_gain = random.randint(50, 120)
+        # Gain random EXP between 300 and 800
+        exp_gain = random.randint(300, 800)
         updated_player, _ = await self.bot.excel_manager.add_exp(discord_id, exp_gain)
 
         current_realm = updated_player.get("Cảnh giới")
@@ -174,8 +261,8 @@ class CultivationCog(commands.Cog):
             title="💞 LỜI MỜI SONG TU ĐẠI ĐẠO",
             description=(
                 f" Tu sĩ **{interaction.user.display_name}** đưa tay ra mời **{dong_dao.mention}** cùng tiến hành song tu!\n\n"
-                f"🌸 **Song tu lợi ích**: Cả 2 cùng nhận **+250 ~ +500 EXP** tu vi khổng lồ!\n"
-                f"⏱️ Lời mời sẽ tự hết hạn trong **60 giây**."
+                f"🌸 **Song tu lợi ích**: Cả 2 cùng nhận **+1,500 ~ +3,500 EXP** tu vi khổng lồ!\n"
+                f"⏱️ Lời mời sẽ tự hết hạn trong **60 giây** (Hồi chiêu 30 phút)."
             ),
             color=discord.Color.pink()
         )
@@ -373,6 +460,111 @@ class CultivationCog(commands.Cog):
                 color=discord.Color.orange()
             )
 
+        await interaction.response.send_message(embed=embed)
+
+    @app_commands.command(name="dau_phap", description="Thách đấu Đấu Pháp Võ Đài với 1 tu sĩ đồng đạo (Cooldown 15 phút)")
+    async def dau_phap(self, interaction: discord.Interaction, dong_dao: discord.User):
+        if self.bot.channel_id and interaction.channel_id != self.bot.channel_id:
+            await interaction.response.send_message("❌ Lệnh này chỉ hoạt động trong kênh tông môn quy định!", ephemeral=True)
+            return
+
+        if dong_dao.id == interaction.user.id or dong_dao.bot:
+            await interaction.response.send_message("❌ Bạn không thể tự thách đấu chính mình hoặc Bot!", ephemeral=True)
+            return
+
+        c_id = str(interaction.user.id)
+        now = time.time()
+        last = self.cooldowns.get(f"dau_phap_{c_id}", 0)
+        cooldown_time = 900  # 15 minutes
+        if now - last < cooldown_time:
+            remaining = int((cooldown_time - (now - last)) / 60)
+            await interaction.response.send_message(f"⏳ Cần bế quan dưỡng sức **{max(1, remaining)} phút** nữa trước khi tiếp tục lên Võ Đài Đấu Pháp!", ephemeral=True)
+            return
+
+        self.cooldowns[f"dau_phap_{c_id}"] = now
+
+        view = DauPhapView(interaction.user, dong_dao, self.bot)
+        embed = discord.Embed(
+            title="⚔️ LỜI THÁCH ĐẤU PHÁP VÕ ĐÀI!",
+            description=(
+                f"🔥 Tu sĩ **{interaction.user.display_name}** tu vi thâm hậu, vung kiếm chỉ hướng **{dong_dao.mention}** thách đấu Luyện Võ Đài!\n\n"
+                f"🏆 **Thưởng tỷ thí**: Tu sĩ chiến thắng nhận `+1,500 ~ +3,000 EXP` & `+1,000 ~ +2,000 Linh Thạch`!\n"
+                f"⏱️ Lời thách đấu có hiệu lực trong **60 giây**."
+            ),
+            color=discord.Color.red()
+        )
+        await interaction.response.send_message(embed=embed, view=view)
+
+    @app_commands.command(name="tam_bao", description="Khám phá Thượng Cổ Bí Cảnh / Khai Quật Cổ Mộ tầm bảo (Cooldown 15 phút)")
+    async def tam_bao(self, interaction: discord.Interaction):
+        if self.bot.channel_id and interaction.channel_id != self.bot.channel_id:
+            await interaction.response.send_message("❌ Lệnh này chỉ hoạt động trong kênh tông môn quy định!", ephemeral=True)
+            return
+
+        discord_id = str(interaction.user.id)
+        username = interaction.user.display_name
+
+        now = time.time()
+        last = self.cooldowns.get(f"tam_bao_{discord_id}", 0)
+        cooldown_time = 900  # 15 minutes
+        if now - last < cooldown_time:
+            remaining = int((cooldown_time - (now - last)) / 60)
+            await interaction.response.send_message(f"⏳ Linh khí Bí cảnh đang dao động dữ dội! Vui lòng đợi **{max(1, remaining)} phút** nữa.", ephemeral=True)
+            return
+
+        self.cooldowns[f"tam_bao_{discord_id}"] = now
+        record_activity(discord_id, "sukien")
+
+        await self.bot.excel_manager.get_or_create_player(discord_id, username)
+
+        outcomes = [
+            {
+                "title": "🏰 Thượng Cổ Tiên Phủ Lộ Mở",
+                "desc": "Ngươi may mắn tìm thấy cổng vào Tiên Phủ còn nguyên vẹn! Thu hoạch được khối lượng lớn linh thạch và tiên thảo thượng phẩm!",
+                "exp": random.randint(2000, 3500),
+                "lt": random.randint(1500, 3000),
+                "item": "Vạn Năm Linh Chi"
+            },
+            {
+                "title": "🌿 Vạn Dược Cốc Kỳ Hoa Yêu Cỏ",
+                "desc": "Ngươi lạc bước vào thung lũng sương mù dạt dào linh khí, hái được tiên dược rực rỡ kim quang!",
+                "exp": random.randint(1200, 2200),
+                "lt": random.randint(1000, 2000),
+                "item": "Lôi Linh Quả"
+            },
+            {
+                "title": "🦴 Bắc Hải Cổ Mộ Tầm Bảo",
+                "desc": "Ngươi mạo hiểm khai quật quan tài đá cổ mộ, phát hiện túi trữ đồ của cao nhân ngàn năm trước để lại!",
+                "exp": random.randint(1500, 2800),
+                "lt": random.randint(1200, 2500),
+                "item": "Xích Viêm Quả"
+            },
+            {
+                "title": "⚡ Cổ Trận Cấm Chế Cạm Bẫy",
+                "desc": "Vô tình giẫm phải cạm bẫy cấm chế! May nhờ công lực thâm hậu phá vỡ linh trận thoát thân, ngộ ra được chút kiếm ý!",
+                "exp": random.randint(800, 1500),
+                "lt": random.randint(300, 800),
+                "item": "Tam Diệp Thảo"
+            }
+        ]
+
+        res = random.choice(outcomes)
+        await self.bot.excel_manager.add_exp(discord_id, res["exp"])
+        await self.bot.excel_manager.add_linh_thach(discord_id, res["lt"])
+        await self.bot.excel_manager.add_item(discord_id, res["item"], 1)
+
+        embed = discord.Embed(
+            title=f"🗝️ KHÁM PHÁ BÍ CẢNH: {res['title']}",
+            description=(
+                f"✨ Tu sĩ **{username}** dấn thân vào sâu trong Cấm Địa Tầm Bảo!\n\n"
+                f"📜 *{res['desc']}*\n\n"
+                f"🎁 **Chiến lợi phẩm thu hoạch**:\n"
+                f"• `+{res['exp']:,}` ✨ EXP Tu Vi\n"
+                f"• `+{res['lt']:,}` 💎 Linh Thạch\n"
+                f"• `1x {res['item']}` 🌿 (Cất vào Túi Đồ)"
+            ),
+            color=discord.Color.teal()
+        )
         await interaction.response.send_message(embed=embed)
 
 async def setup(bot):

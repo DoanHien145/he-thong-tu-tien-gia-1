@@ -63,8 +63,8 @@ QUESTS = [
         "activity_code": "diem_danh",
         "req_command": "/diem_danh",
         "desc": "Báo danh tông môn hàng ngày để thể hiện tinh thần mẫn cán.",
-        "reward_lt": 200,
-        "reward_exp": 150,
+        "reward_lt": 500,
+        "reward_exp": 800,
         "reward_item": "Tam Diệp Thảo",
         "hint": "Chạy lệnh `/diem_danh` ít nhất 1 lần trong ngày!"
     },
@@ -74,8 +74,8 @@ QUESTS = [
         "activity_code": "tu_luyen",
         "req_command": "/tu_luyen",
         "desc": "Tiến hành bế quan tu luyện hấp thụ linh khí thiên địa.",
-        "reward_lt": 250,
-        "reward_exp": 200,
+        "reward_lt": 600,
+        "reward_exp": 1000,
         "reward_item": "Tam Diệp Thảo",
         "hint": "Chạy lệnh `/tu_luyen` ít nhất 1 lần trong ngày!"
     },
@@ -85,8 +85,8 @@ QUESTS = [
         "activity_code": "song_tu",
         "req_command": "/song_tu",
         "desc": "Mời một đồng đạo cùng tiến hành song tu hòa hợp linh khí.",
-        "reward_lt": 300,
-        "reward_exp": 300,
+        "reward_lt": 1000,
+        "reward_exp": 2000,
         "reward_item": "U Nhược Hoa",
         "hint": "Chạy `/song_tu [@đồng_đạo]` và được đồng ý!"
     },
@@ -96,8 +96,8 @@ QUESTS = [
         "activity_code": "tancong_boss",
         "req_command": "/tancong",
         "desc": "Tham gia tấn công Thượng Cổ Thiên Ma bảo vệ Tông Môn.",
-        "reward_lt": 500,
-        "reward_exp": 400,
+        "reward_lt": 1500,
+        "reward_exp": 2500,
         "reward_item": "Xích Viêm Quả",
         "hint": "Dùng lệnh `/tancong` để đánh Boss Thiên Ma ít nhất 1 lần!"
     },
@@ -107,8 +107,8 @@ QUESTS = [
         "activity_code": "che_dan",
         "req_command": "/che_dan",
         "desc": "Khai mở Dược Lô luyện đan hoặc sở hữu linh đan trong túi đồ.",
-        "reward_lt": 350,
-        "reward_exp": 250,
+        "reward_lt": 800,
+        "reward_exp": 1200,
         "reward_item": "U Nhược Hoa",
         "hint": "Thực hiện `/che_dan` HOẶC sở hữu đan dược trong `/tui_do`!"
     },
@@ -118,8 +118,8 @@ QUESTS = [
         "activity_code": "dung_dan",
         "req_command": "/dung_dan",
         "desc": "Sử dụng 1 viên Linh Đan bất kỳ để gia tăng công lực.",
-        "reward_lt": 400,
-        "reward_exp": 300,
+        "reward_lt": 1000,
+        "reward_exp": 1500,
         "reward_item": "Xích Viêm Quả",
         "hint": "Chạy lệnh `/dung_dan [tên_đan]` hôm nay!"
     },
@@ -129,8 +129,8 @@ QUESTS = [
         "activity_code": "mua_shop",
         "req_command": "/mua",
         "desc": "Ghé thăm Bảo Các Tông Môn mua sắm đan dược hoặc dược liệu.",
-        "reward_lt": 300,
-        "reward_exp": 200,
+        "reward_lt": 600,
+        "reward_exp": 1000,
         "reward_item": "Tam Diệp Thảo",
         "hint": "Ghé `/shop` và mua bằng lệnh `/mua [tên_vật_phẩm]`!"
     },
@@ -140,8 +140,8 @@ QUESTS = [
         "activity_code": "sukien",
         "req_command": "/thamgia hoặc /nhan_co_duyen",
         "desc": "Tham gia biến cố Tông Môn hoặc cướp cơ duyên xuất hiện trong kênh.",
-        "reward_lt": 450,
-        "reward_exp": 350,
+        "reward_lt": 1200,
+        "reward_exp": 2000,
         "reward_item": "Lôi Linh Quả",
         "hint": "Nhấn nút hoặc gõ `/thamgia` / `/nhan_co_duyen` khi sự kiện xuất hiện!"
     }
@@ -162,8 +162,9 @@ def check_quest_condition(discord_id: str, quest: dict, player: dict, inventory:
         return False, "Bạn chưa bế quan tu luyện hôm nay. Hãy chạy lệnh `/tu_luyen` trước!"
 
     if code == "song_tu":
-        if has_activity(discord_id, "song_tu"):
-            return True, "Đã hoàn thành song tu hôm nay!"
+        partner = player.get("Song tu partner")
+        if has_activity(discord_id, "song_tu") or (partner and str(partner).strip() != ""):
+            return True, "Đã hoàn thành song tu!"
         return False, "Bạn chưa thực hiện song tu. Hãy dùng `/song_tu [@đồng_đạo]`!"
 
     if code == "tancong_boss":
@@ -471,24 +472,19 @@ class EconomyCog(commands.Cog):
         updated_boss, killed = await self.bot.excel_manager.attack_daily_boss(discord_id, username, damage)
 
         # Rewards for attacking
-        reward_lt = random.randint(100, 300) + (idx * 50)
-        reward_exp = random.randint(150, 400) + (idx * 60)
+        reward_lt = random.randint(300, 800) + (idx * 100)
+        reward_exp = random.randint(800, 2000) + (idx * 150)
 
         await self.bot.excel_manager.add_exp(discord_id, reward_exp)
         await self.bot.excel_manager.add_linh_thach(discord_id, reward_lt)
-
-        kill_msg = "\n🎉 **ĐÃ TUNG ĐÒN KẾT LIỄU TIÊU DIỆT BOSS!** Nhận thêm 1,000 Linh Thạch bonus!" if killed else ""
-        if killed:
-            await self.bot.excel_manager.add_linh_thach(discord_id, 1000)
 
         embed = discord.Embed(
             title=f"⚔️ TẤN CÔNG BOSS THIÊN MA! ⚔️",
             description=(
                 f"💥 **{username}** (`{current_realm}`) giáng công kích thần thông vào **{boss_info['name']}**!\n"
                 f"🔥 Gây ra **{damage:,} Sát Thương**!\n"
-                f"❤️ Sinh lực Boss còn: **{updated_boss['hp']:,} HP**\n\n"
+                f"❤️ Sinh lực Boss: **366,769 / 366,769 HP** (Bất Tử — Đã cộng dồn sát thương vào Bảng Xếp Hạng!)\n\n"
                 f"🎁 **Thưởng tham chiến**: `+{reward_lt}` 💎 Linh Thạch | `+{reward_exp}` ✨ EXP"
-                f"{kill_msg}"
             ),
             color=discord.Color.red()
         )

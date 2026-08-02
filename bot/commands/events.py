@@ -101,6 +101,7 @@ class SingleClaimView(discord.ui.View):
 class EventsCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.diet_quai_cooldowns: dict[str, float] = {}
         self.auto_events_loop.start()
 
     def cog_unload(self):
@@ -169,29 +170,29 @@ class EventsCog(commands.Cog):
         else:
             group_events = [
                 {
+                    "title": "🐾 THÚ TRIỀU BỘC PHÁT TRÀN SƠN MÔN!",
+                    "desc": "Hàng ngàn hung thú từ Vạn Yêu Cốc cuồng bạo tràn xuống Sơn Môn! Triệu tập chư vị tu sĩ hợp lực chống trả Thú Triều!",
+                    "exp": 2500, "lt": 1500, "item": "Vạn Năm Linh Chi"
+                },
+                {
                     "title": "🌌 Dị Tượng Mở Không Gian!",
                     "desc": "Một vết nứt không gian mở ra giữa bầu trời tông môn! Linh khí cuồn cuộn đổ xuống. Chư vị đồng đạo ai muốn tiến vào?",
-                    "exp": 400, "lt": 350, "item": "Tam Diệp Thảo"
+                    "exp": 1000, "lt": 800, "item": "Tam Diệp Thảo"
                 },
                 {
                     "title": "🐲 Long Mạch Thức Tỉnh!",
                     "desc": "Thái cổ long mạch dưới sơn môn rung chuyển, bộc phát linh khí dạt dào!",
-                    "exp": 500, "lt": 450, "item": "U Nhược Hoa"
+                    "exp": 1200, "lt": 1000, "item": "U Nhược Hoa"
                 },
                 {
                     "title": "🏆 Cổ Trận Linh Khí Giáng Lâm!",
                     "desc": "Trận pháp thượng cổ tự động vận hành, mở ra cơ hội hấp thu linh khí cho chư vị tu sĩ!",
-                    "exp": 600, "lt": 500, "item": "Xích Viêm Quả"
+                    "exp": 1500, "lt": 1200, "item": "Xích Viêm Quả"
                 },
                 {
                     "title": "📜 Tiên Ngự Di Bảo Xuất Hiện!",
                     "desc": "Di tích tiên nhân tỏa tiên quang chiếu sáng cả bầu trời tông môn!",
-                    "exp": 800, "lt": 600, "item": "Lôi Linh Quả"
-                },
-                {
-                    "title": "👹 Yêu Vương Tràn Xuống Núi!",
-                    "desc": "Hàng trăm yêu ma tràn xuống sơn môn. Triệu tập chư vị đồng đạo cùng tiến vào trừ yêu!",
-                    "exp": 700, "lt": 800, "item": "Vạn Năm Linh Chi"
+                    "exp": 2000, "lt": 1500, "item": "Lôi Linh Quả"
                 }
             ]
             ge = random.choice(group_events)
@@ -284,6 +285,105 @@ class EventsCog(commands.Cog):
                 f"• `+{exp}` ✨ EXP Tu vi\n"
                 f"• `+{lt}` 💎 Linh Thạch\n"
                 f"• `1x {item}` 🌿 (Đã vào Túi Đồ)"
+            ),
+            color=discord.Color.gold()
+        )
+        await interaction.response.send_message(embed=embed)
+
+    @app_commands.command(name="diet_quai", description="Trảm diệt yêu quái ngẫu nhiên cản đường (Yêu cầu Tu Vi / Cảnh Giới, Cooldown 10 phút)")
+    async def diet_quai(self, interaction: discord.Interaction):
+        if self.bot.channel_id and interaction.channel_id != self.bot.channel_id:
+            await interaction.response.send_message("❌ Lệnh này chỉ hoạt động trong kênh tông môn quy định!", ephemeral=True)
+            return
+
+        discord_id = str(interaction.user.id)
+        username = interaction.user.display_name
+
+        now = time.time()
+        last = self.diet_quai_cooldowns.get(discord_id, 0)
+        cooldown_time = 600  # 10 minutes max
+        if now - last < cooldown_time:
+            remaining = int((cooldown_time - (now - last)) / 60)
+            await interaction.response.send_message(
+                f"⏳ **{username}** vừa huyết chiến tiêu diệt quái gần đây! Vui lòng tĩnh dưỡng **{max(1, remaining)} phút** nữa.",
+                ephemeral=True
+            )
+            return
+
+        self.diet_quai_cooldowns[discord_id] = now
+        record_activity(discord_id, "sukien")
+
+        player = await self.bot.excel_manager.get_or_create_player(discord_id, username)
+        current_realm = player.get("Cảnh giới", "Luyện Khí tầng 1")
+        total_exp = int(player.get("EXP", 0))
+
+        monsters = [
+            {"name": "🐺 Cửu Trảo Yêu Lang", "min_exp": 100, "req_realm": "Luyện Khí tầng 1", "exp": 1000, "lt": 500, "item": "Tam Diệp Thảo"},
+            {"name": "🕷️ Bích Nhãn Độc Nhện", "min_exp": 850, "req_realm": "Luyện Khí tầng 4", "exp": 1800, "lt": 800, "item": "U Nhược Hoa"},
+            {"name": "🐻 Thạch Giáp Hùng Vương", "min_exp": 3500, "req_realm": "Luyện Khí tầng 8", "exp": 3000, "lt": 1200, "item": "Xích Viêm Quả"},
+            {"name": "🐍 Xích Luyện Hỏa Xà", "min_exp": 9000, "req_realm": "Trúc Cơ Sơ Kỳ", "exp": 5000, "lt": 2000, "item": "Lôi Linh Quả"}
+        ]
+
+        monster = random.choice(monsters)
+
+        if total_exp < monster["min_exp"]:
+            embed = discord.Embed(
+                title=f"💥 KHIÊU CHIẾN THẤT BẠI: {monster['name']}",
+                description=(
+                    f"😱 **{username}** chạm trán **{monster['name']}**!\n\n"
+                    f"⚠️ Yêu quái tỏa hung khí ngút trời! Yêu cầu tu vi: **{monster['req_realm']}** (`{monster['min_exp']}` EXP).\n"
+                    f"💔 Tu vi hiện tại của ngươi (`{total_exp}` EXP) chưa đủ nên bị hung thú tát văng, đành ngậm ngùi lui bước!"
+                ),
+                color=discord.Color.red()
+            )
+            await interaction.response.send_message(embed=embed)
+            return
+
+        # Player wins
+        await self.bot.excel_manager.add_exp(discord_id, monster["exp"])
+        await self.bot.excel_manager.add_linh_thach(discord_id, monster["lt"])
+        await self.bot.excel_manager.add_item(discord_id, monster["item"], 1)
+
+        embed = discord.Embed(
+            title=f"⚔️ DIỆT QUÁI THÀNH CÔNG: {monster['name']}",
+            description=(
+                f"🎉 **{username}** (`{current_realm}`) vận chuyển thần thông xuất sắc trảm diệt **{monster['name']}**!\n\n"
+                f"🎁 **Phần thưởng chiến lợi phẩm**:\n"
+                f"• `+{monster['exp']}` ✨ EXP Tu Vi\n"
+                f"• `+{monster['lt']}` 💎 Linh Thạch\n"
+                f"• `1x {monster['item']}` 🌿 (Cất vào Túi Đồ)"
+            ),
+            color=discord.Color.green()
+        )
+        await interaction.response.send_message(embed=embed)
+
+    @app_commands.command(name="danh_thu_trieu", description="Tham gia chống trả đợt Thú Triều bộc phát bảo vệ Sơn Môn")
+    async def danh_thu_trieu(self, interaction: discord.Interaction):
+        if self.bot.channel_id and interaction.channel_id != self.bot.channel_id:
+            await interaction.response.send_message("❌ Lệnh này chỉ hoạt động trong kênh tông môn quy định!", ephemeral=True)
+            return
+
+        discord_id = str(interaction.user.id)
+        username = interaction.user.display_name
+        record_activity(discord_id, "sukien")
+
+        await self.bot.excel_manager.get_or_create_player(discord_id, username)
+        exp = random.randint(2000, 4000)
+        lt = random.randint(1000, 2000)
+        item = random.choice(["Xích Viêm Quả", "Lôi Linh Quả", "Vạn Năm Linh Chi"])
+
+        await self.bot.excel_manager.add_exp(discord_id, exp)
+        await self.bot.excel_manager.add_linh_thach(discord_id, lt)
+        await self.bot.excel_manager.add_item(discord_id, item, 1)
+
+        embed = discord.Embed(
+            title="🐾 CHỐNG TRẢ THÚ TRIỀU THÀNH CÔNG!",
+            description=(
+                f"🛡️ **{username}** giáng lâm tiền tuyến, vung kiếm trảm diệt hàng trăm bầy hung thú cuồng bạo!\n\n"
+                f"🎁 **Thưởng công trạng thủ thành**:\n"
+                f"• `+{exp}` ✨ EXP Tu vi\n"
+                f"• `+{lt}` 💎 Linh Thạch\n"
+                f"• `1x {item}` 🌿 (Cất vào Túi Đồ)"
             ),
             color=discord.Color.gold()
         )
