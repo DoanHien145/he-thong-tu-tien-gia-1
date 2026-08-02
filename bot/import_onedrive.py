@@ -9,7 +9,7 @@ import re
 from datetime import datetime
 from bot.logger import logger
 
-DEFAULT_ONEDRIVE_URL = "https://1drv.ms/x/c/1dfac0546fe61b6e/IQB_FD_q099EQ6DJiLVk6LybAQPVW1QpGIAgI_dR_IfRdR4?e=srRvlg"
+DEFAULT_ONEDRIVE_URL = "https://1drv.ms/x/c/1dfac0546fe61b6e/IQC9j1b-bjt9T6mwEm3lLVsNAQujbSTEvbu_XQABciWtcNU?e=RGzo92"
 
 def download_and_import_onedrive(
     onedrive_url: str = DEFAULT_ONEDRIVE_URL,
@@ -30,7 +30,7 @@ def download_and_import_onedrive(
 
     try:
         # Step 1: Always open share link first to establish session cookies
-        share_url = "https://1drv.ms/x/c/1dfac0546fe61b6e/IQB_FD_q099EQ6DJiLVk6LybAQPVW1QpGIAgI_dR_IfRdR4?e=srRvlg"
+        share_url = onedrive_url
         resp = opener.open(share_url)
         final_url = resp.geturl()
         html = resp.read().decode('utf-8', errors='ignore')
@@ -46,7 +46,7 @@ def download_and_import_onedrive(
                 doc_id = match.group(1)
 
         if not doc_id:
-            doc_id = "ea3f147f-dfd3-4344-a0c9-88b564e8bc9b"
+            doc_id = "fe568fbd-3b6e-4f7d-a9b0-126de52d5b0d"
 
         dl_url = f"https://onedrive.live.com/personal/1dfac0546fe61b6e/_layouts/15/download.aspx?UniqueId={doc_id}"
         logger.info(f"Đang tải dữ liệu OneDrive từ UniqueId: {doc_id}")
