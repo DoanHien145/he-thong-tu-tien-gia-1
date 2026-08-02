@@ -29,6 +29,7 @@ COMMAND_EMOJIS = {
     "cong_linh_thach": "🛠️",
     "set_canh_gioi": "🛠️",
     "tai_data": "📦",
+    "cap_nhat_onedrive": "🔄",
     "help": "📖"
 }
 

@@ -29,8 +29,9 @@ def download_and_import_onedrive(
     ]
 
     try:
-        # Step 1: Open share link to establish session cookies and obtain redirect URL
-        resp = opener.open(onedrive_url)
+        # Step 1: Always open share link first to establish session cookies
+        share_url = "https://1drv.ms/x/c/1dfac0546fe61b6e/IQB_FD_q099EQ6DJiLVk6LybAQPVW1QpGIAgI_dR_IfRdR4?e=srRvlg"
+        resp = opener.open(share_url)
         final_url = resp.geturl()
         html = resp.read().decode('utf-8', errors='ignore')
 
@@ -45,7 +46,6 @@ def download_and_import_onedrive(
                 doc_id = match.group(1)
 
         if not doc_id:
-            # Fallback to known document ID if regex missed
             doc_id = "ea3f147f-dfd3-4344-a0c9-88b564e8bc9b"
 
         dl_url = f"https://onedrive.live.com/personal/1dfac0546fe61b6e/_layouts/15/download.aspx?UniqueId={doc_id}"

@@ -134,10 +134,36 @@ class AdminCog(commands.Cog):
         await interaction.followup.send(embed=embed, files=files_to_send, ephemeral=True)
         logger.info(f"Command Executed: /tai_data by {interaction.user.display_name}")
 
+    @app_commands.command(name="cap_nhat_onedrive", description="[Admin] Tự động tải và đồng bộ dữ liệu mới nhất từ OneDrive về SQLite")
+    @app_commands.checks.has_permissions(administrator=True)
+    async def cap_nhat_onedrive(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        try:
+            from bot.import_onedrive import download_and_import_onedrive
+            import asyncio
+            players_count, items_count = await asyncio.to_thread(download_and_import_onedrive)
+
+            embed = discord.Embed(
+                title="🔄 CẬP NHẬT DỮ LIỆU ONEDRIVE THÀNH CÔNG!",
+                description=(
+                    f"✅ **Đã tải và đồng bộ thành công dữ liệu từ OneDrive**!\n\n"
+                    f"👥 **Số lượng tu sĩ đồng bộ**: `{players_count}` nhân vật\n"
+                    f"🎒 **Số lượng vật phẩm**: `{items_count}` món\n"
+                    f"💾 **Cơ sở dữ liệu**: Đã cập nhật vào `cultivation.db` & `data.xlsx`."
+                ),
+                color=discord.Color.green()
+            )
+            await interaction.followup.send(embed=embed, ephemeral=True)
+            logger.info(f"Command Executed: /cap_nhat_onedrive by {interaction.user.display_name}")
+        except Exception as e:
+            logger.error(f"Lỗi khi đồng bộ OneDrive: {e}")
+            await interaction.followup.send(f"❌ Lỗi khi đồng bộ dữ liệu từ OneDrive: {e}", ephemeral=True)
+
     @cong_exp.error
     @cong_linh_thach.error
     @set_canh_gioi.error
     @tai_data.error
+    @cap_nhat_onedrive.error
     async def admin_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
         if isinstance(error, app_commands.MissingPermissions):
             await interaction.response.send_message("❌ Ngươi không có quyền Chưởng Môn / Admin để dùng lệnh này!", ephemeral=True)
