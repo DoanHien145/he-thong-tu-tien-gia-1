@@ -491,7 +491,7 @@ class DatabaseManager:
                 "🔥 Vực Thẫm Viêm Ma Vương"
             ]
             name = random.choice(boss_names)
-            max_hp = 500000
+            max_hp = 366769
             cursor.execute("""
                 INSERT INTO world_boss (date, name, hp, max_hp, is_dead)
                 VALUES (?, ?, ?, ?, 0)
@@ -513,8 +513,8 @@ class DatabaseManager:
         conn = self._get_connection()
         cursor = conn.cursor()
 
-        new_hp = max(0, boss["hp"] - damage)
-        is_dead = 1 if new_hp <= 0 else 0
+        new_hp = boss["max_hp"]
+        is_dead = 0
 
         cursor.execute("UPDATE world_boss SET hp = ?, is_dead = ? WHERE date = ?", (new_hp, is_dead, today))
 
