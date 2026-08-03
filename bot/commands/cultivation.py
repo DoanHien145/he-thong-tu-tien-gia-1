@@ -31,8 +31,8 @@ class SongTuView(discord.ui.View):
         target_id = str(self.target.id)
 
         # Record activity for both
-        record_activity(req_id, "song_tu")
-        record_activity(target_id, "song_tu")
+        record_activity(req_id, "song_tu", self.bot)
+        record_activity(target_id, "song_tu", self.bot)
 
         # EXP Reward
         exp_gain = random.randint(1500, 3500)
@@ -109,8 +109,10 @@ class DauPhapView(discord.ui.View):
         c_power = (c_realm_idx + 1) * 3000 + c_exp + random.randint(1000, 5000)
         d_power = (d_realm_idx + 1) * 3000 + d_exp + random.randint(1000, 5000)
 
-        record_activity(c_id, "sukien")
-        record_activity(d_id, "sukien")
+        record_activity(c_id, "sukien", self.bot)
+        record_activity(c_id, "su_kien", self.bot)
+        record_activity(d_id, "sukien", self.bot)
+        record_activity(d_id, "su_kien", self.bot)
 
         reward_exp = random.randint(1500, 3000)
         reward_lt = random.randint(1000, 2000)
@@ -188,7 +190,7 @@ class CultivationCog(commands.Cog):
             return
 
         self.cooldowns[discord_id] = now
-        record_activity(discord_id, "tu_luyen")
+        record_activity(discord_id, "tu_luyen", self.bot)
 
         player = await self.bot.excel_manager.get_or_create_player(discord_id, username)
 
@@ -438,7 +440,7 @@ class CultivationCog(commands.Cog):
         discord_id = str(interaction.user.id)
         username = interaction.user.display_name
 
-        record_activity(discord_id, "diem_danh")
+        record_activity(discord_id, "diem_danh", self.bot)
         await self.bot.excel_manager.get_or_create_player(discord_id, username)
 
         success, player, msg = await self.bot.excel_manager.check_in(discord_id)
@@ -513,7 +515,8 @@ class CultivationCog(commands.Cog):
             return
 
         self.cooldowns[f"tam_bao_{discord_id}"] = now
-        record_activity(discord_id, "sukien")
+        record_activity(discord_id, "sukien", self.bot)
+        record_activity(discord_id, "su_kien", self.bot)
 
         await self.bot.excel_manager.get_or_create_player(discord_id, username)
 

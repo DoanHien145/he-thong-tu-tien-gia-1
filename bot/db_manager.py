@@ -97,6 +97,16 @@ class DatabaseManager:
             )
         """)
 
+        # User Activities Log table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS user_activities (
+                date TEXT NOT NULL,
+                discord_id TEXT NOT NULL,
+                activity_name TEXT NOT NULL,
+                PRIMARY KEY (date, discord_id, activity_name)
+            )
+        """)
+
         conn.commit()
 
         # Check if database is empty (e.g., after a container redeploy or fresh environment)
@@ -582,6 +592,42 @@ class DatabaseManager:
         """, (today, str(discord_id), str(quest_id)))
         conn.commit()
         conn.close()
+
+    # --- Persistent User Activities Methods ---
+    async def record_user_activity(self, discord_id: str, activity_name: str):
+        await asyncio.to_thread(self._sync_record_activity, str(discord_id), activity_name)
+
+    def _sync_record_activity(self, discord_id: str, activity_name: str):
+        today = datetime.now().strftime("%Y-%m-%d")
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT OR IGNORE INTO user_activities (date, discord_id, activity_name)
+            VALUES (?, ?, ?)
+        """, (today, str(discord_id), activity_name))
+        conn.commit()
+        conn.close()
+
+    async def has_user_activity(self, discord_id: str, activity_name: str) -> bool:
+        return await asyncio.to_thread(self._sync_has_activity, str(discord_id), activity_name)
+
+    def _sync_has_activity(self, discord_id: str, activity_name: str) -> bool:
+        today = datetime.now().strftime("%Y-%m-%d")
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1 FROM user_activities WHERE date = ? AND discord_id = ? AND activity_name = ?", (today, str(discord_id), activity_name))
+        row = cursor.fetchone()
+        conn.close()
+        return row is not None
+
+    def _sync_has_boss_damage(self, discord_id: str) -> bool:
+        today = datetime.now().strftime("%Y-%m-%d")
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT damage FROM boss_damage WHERE date = ? AND discord_id = ?", (today, str(discord_id)))
+        row = cursor.fetchone()
+        conn.close()
+        return row is not None and row[0] > 0
 
     async def export_to_excel(self, excel_path: str = "data/data.xlsx"):
         """Generates dynamic Excel dump from SQLite for download endpoints."""

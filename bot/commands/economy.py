@@ -32,17 +32,35 @@ SHOP_ITEMS = {
 USER_ACTIVITIES: dict[str, set[str]] = {}
 USER_QUEST_CLAIMS: dict[str, set[str]] = {}
 
-def record_activity(discord_id: str, activity_name: str):
+def record_activity(discord_id: str, activity_name: str, bot=None):
     today = datetime.now().strftime("%Y-%m-%d")
     key = f"{discord_id}_{today}"
     if key not in USER_ACTIVITIES:
         USER_ACTIVITIES[key] = set()
     USER_ACTIVITIES[key].add(activity_name)
+    if bot and hasattr(bot, "excel_manager"):
+        bot.excel_manager._sync_record_activity(discord_id, activity_name)
+    else:
+        try:
+            from bot.excel_manager import ExcelManager
+            em = ExcelManager()
+            em._sync_record_activity(discord_id, activity_name)
+        except Exception:
+            pass
 
-def has_activity(discord_id: str, activity_name: str) -> bool:
+def has_activity(discord_id: str, activity_name: str, bot=None) -> bool:
     today = datetime.now().strftime("%Y-%m-%d")
     key = f"{discord_id}_{today}"
-    return activity_name in USER_ACTIVITIES.get(key, set())
+    if activity_name in USER_ACTIVITIES.get(key, set()):
+        return True
+    try:
+        if bot and hasattr(bot, "excel_manager"):
+            return bot.excel_manager._sync_has_activity(discord_id, activity_name)
+        from bot.excel_manager import ExcelManager
+        em = ExcelManager()
+        return em._sync_has_activity(discord_id, activity_name)
+    except Exception:
+        return False
 
 def is_quest_claimed(discord_id: str, quest_id: str, bot=None) -> bool:
     today = datetime.now().strftime("%Y-%m-%d")
@@ -153,47 +171,53 @@ QUESTS = [
     }
 ]
 
-def check_quest_condition(discord_id: str, quest: dict, player: dict, inventory: dict) -> tuple[bool, str]:
+def check_quest_condition(discord_id: str, quest: dict, player: dict, inventory: dict, bot=None) -> tuple[bool, str]:
     code = quest["activity_code"]
     today = datetime.now().strftime("%Y-%m-%d")
 
     if code == "diem_danh":
-        if player.get("Ngày điểm danh") == today or has_activity(discord_id, "diem_danh"):
+        if player.get("Ngày điểm danh") == today or has_activity(discord_id, "diem_danh", bot):
             return True, "Đã báo danh thành công!"
         return False, "Bạn chưa báo danh hôm nay. Hãy chạy lệnh `/diem_danh` trước!"
 
     if code == "tu_luyen":
-        if has_activity(discord_id, "tu_luyen"):
+        if has_activity(discord_id, "tu_luyen", bot) or has_activity(discord_id, "tu_luyen_thanh_cong", bot):
             return True, "Đã hoàn thành tu luyện hôm nay!"
         return False, "Bạn chưa bế quan tu luyện hôm nay. Hãy chạy lệnh `/tu_luyen` trước!"
 
     if code == "song_tu":
-        if has_activity(discord_id, "song_tu"):
+        if has_activity(discord_id, "song_tu", bot):
             return True, "Đã hoàn thành song tu hôm nay!"
         return False, "Bạn chưa thực hiện song tu hôm nay. Hãy dùng `/song_tu [@đồng_đạo]`!"
 
     if code == "tancong_boss":
-        if has_activity(discord_id, "tancong_boss"):
+        has_boss_hit = False
+        if bot and hasattr(bot, "excel_manager"):
+            try:
+                has_boss_hit = bot.excel_manager._sync_has_boss_damage(discord_id)
+            except Exception:
+                pass
+        if has_boss_hit or any(has_activity(discord_id, act, bot) for act in ["tancong_boss", "tancong", "danh_boss"]):
             return True, "Đã tấn công Thượng Cổ Thiên Ma hôm nay!"
         return False, "Bạn chưa tấn công Boss hôm nay. Hãy dùng lệnh `/tancong`!"
 
     if code == "che_dan":
-        if has_activity(discord_id, "che_dan"):
+        if has_activity(discord_id, "che_dan", bot):
             return True, "Đã mở lò luyện đan hôm nay!"
         return False, "Bạn chưa luyện đan hôm nay. Hãy dùng lệnh `/che_dan`!"
 
     if code == "dung_dan":
-        if has_activity(discord_id, "dung_dan"):
+        if has_activity(discord_id, "dung_dan", bot):
             return True, "Đã cắn đan dược hôm nay!"
         return False, "Bạn chưa sử dụng linh đan hôm nay. Hãy dùng lệnh `/dung_dan [tên_đan]` trước!"
 
-    if code == "mua_shop":
-        if has_activity(discord_id, "mua_shop"):
+    if code in ["mua_shop", "mua_hang"]:
+        if any(has_activity(discord_id, act, bot) for act in ["mua_shop", "mua_hang", "mua"]):
             return True, "Đã giao dịch mua hàng tại Bảo Các!"
         return False, "Bạn chưa mua hàng tại Bảo Các. Hãy xem `/shop` và mua bằng `/mua [tên_vật_phẩm]`!"
 
-    if code == "sukien":
-        if has_activity(discord_id, "thamgia") or has_activity(discord_id, "nhan_co_duyen") or has_activity(discord_id, "sukien"):
+    if code in ["sukien", "su_kien"]:
+        if any(has_activity(discord_id, act, bot) for act in ["sukien", "su_kien", "thamgia", "nhan_co_duyen", "danh_thu_trieu", "diet_quai"]):
             return True, "Đã tham gia sự kiện Tông Môn / nhận cơ duyên!"
         return False, "Bạn chưa tham gia sự kiện Tông Môn nào hôm nay!"
 
@@ -207,7 +231,7 @@ async def claim_all_quests_for_user(bot, discord_id: str, username: str) -> tupl
     ready_quests = []
     for q in QUESTS:
         if not is_quest_claimed(discord_id, q["id"], bot):
-            ok, _ = check_quest_condition(discord_id, q, player, inventory)
+            ok, _ = check_quest_condition(discord_id, q, player, inventory, bot)
             if ok:
                 ready_quests.append(q)
 
@@ -464,7 +488,9 @@ class EconomyCog(commands.Cog):
             await interaction.response.send_message(embed=embed)
             return
 
-        record_activity(discord_id, "mua_shop")
+        record_activity(discord_id, "mua_shop", self.bot)
+        record_activity(discord_id, "mua_hang", self.bot)
+        record_activity(discord_id, "mua", self.bot)
 
         self.shop_stock[matched_item]["stock"] -= so_luong
         user_bought_map[matched_item] = already_bought + so_luong
@@ -552,7 +578,9 @@ class EconomyCog(commands.Cog):
             return
 
         self.boss_cooldowns[discord_id] = now
-        record_activity(discord_id, "tancong_boss")
+        record_activity(discord_id, "tancong_boss", self.bot)
+        record_activity(discord_id, "tancong", self.bot)
+        record_activity(discord_id, "danh_boss", self.bot)
 
         player = await self.bot.excel_manager.get_or_create_player(discord_id, username)
         current_realm = player.get("Cảnh giới", "Luyện Khí tầng 1")
@@ -622,7 +650,7 @@ class EconomyCog(commands.Cog):
 
             for idx, q in enumerate(QUESTS, 1):
                 claimed = is_quest_claimed(discord_id, q["id"], self.bot)
-                ok, note = check_quest_condition(discord_id, q, player, inventory)
+                ok, note = check_quest_condition(discord_id, q, player, inventory, self.bot)
 
                 if claimed:
                     status = "🟢 `[ĐÃ HOÀN THÀNH HÔM NAY]`"
@@ -671,7 +699,7 @@ class EconomyCog(commands.Cog):
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
-        ok, reason = check_quest_condition(discord_id, selected_quest, player, inventory)
+        ok, reason = check_quest_condition(discord_id, selected_quest, player, inventory, self.bot)
         if not ok:
             embed = discord.Embed(
                 title="🔒 Chưa Hoàn Thành Hoạt Động Yêu Cầu",

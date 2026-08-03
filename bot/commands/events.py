@@ -36,7 +36,9 @@ class GroupEventView(discord.ui.View):
 
         ACTIVE_CHANNEL_EVENT["participants"].add(discord_id)
         username = interaction.user.display_name
-        record_activity(discord_id, "thamgia")
+        record_activity(discord_id, "thamgia", self.bot)
+        record_activity(discord_id, "sukien", self.bot)
+        record_activity(discord_id, "su_kien", self.bot)
 
         # Grant immediate rewards
         await self.bot.excel_manager.get_or_create_player(discord_id, username)
@@ -70,7 +72,9 @@ class SingleClaimView(discord.ui.View):
 
         ACTIVE_CHANNEL_EVENT["claimed_by"] = username
         ACTIVE_CHANNEL_EVENT["active"] = False
-        record_activity(discord_id, "nhan_co_duyen")
+        record_activity(discord_id, "nhan_co_duyen", self.bot)
+        record_activity(discord_id, "sukien", self.bot)
+        record_activity(discord_id, "su_kien", self.bot)
 
         self.stop()
         for child in self.children:
@@ -266,7 +270,9 @@ class EventsCog(commands.Cog):
 
         ACTIVE_CHANNEL_EVENT["claimed_by"] = username
         ACTIVE_CHANNEL_EVENT["active"] = False
-        record_activity(discord_id, "nhan_co_duyen")
+        record_activity(discord_id, "nhan_co_duyen", self.bot)
+        record_activity(discord_id, "sukien", self.bot)
+        record_activity(discord_id, "su_kien", self.bot)
 
         await self.bot.excel_manager.get_or_create_player(discord_id, username)
         exp = ACTIVE_CHANNEL_EVENT["rewards"].get("exp", 1000)
@@ -311,7 +317,9 @@ class EventsCog(commands.Cog):
             return
 
         self.diet_quai_cooldowns[discord_id] = now
-        record_activity(discord_id, "sukien")
+        record_activity(discord_id, "sukien", self.bot)
+        record_activity(discord_id, "su_kien", self.bot)
+        record_activity(discord_id, "diet_quai", self.bot)
 
         player = await self.bot.excel_manager.get_or_create_player(discord_id, username)
         current_realm = player.get("Cảnh giới", "Luyện Khí tầng 1")
@@ -365,7 +373,9 @@ class EventsCog(commands.Cog):
 
         discord_id = str(interaction.user.id)
         username = interaction.user.display_name
-        record_activity(discord_id, "sukien")
+        record_activity(discord_id, "sukien", self.bot)
+        record_activity(discord_id, "su_kien", self.bot)
+        record_activity(discord_id, "danh_thu_trieu", self.bot)
 
         await self.bot.excel_manager.get_or_create_player(discord_id, username)
         exp = random.randint(2000, 4000)

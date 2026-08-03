@@ -161,7 +161,7 @@ class AlchemyCog(commands.Cog):
         discord_id = str(interaction.user.id)
         username = interaction.user.display_name
 
-        record_activity(discord_id, "che_dan")
+        record_activity(discord_id, "che_dan", self.bot)
 
         if not ten_dan:
             embed = discord.Embed(
@@ -268,7 +268,7 @@ class AlchemyCog(commands.Cog):
         discord_id = str(interaction.user.id)
         username = interaction.user.display_name
 
-        record_activity(discord_id, "dung_dan")
+        record_activity(discord_id, "dung_dan", self.bot)
 
         matched_dan = None
         for dan_name in DAN_EFFECTS:
