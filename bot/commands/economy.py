@@ -181,12 +181,22 @@ def check_quest_condition(discord_id: str, quest: dict, player: dict, inventory:
         return False, "Bạn chưa báo danh hôm nay. Hãy chạy lệnh `/diem_danh` trước!"
 
     if code == "tu_luyen":
-        if has_activity(discord_id, "tu_luyen", bot) or has_activity(discord_id, "tu_luyen_thanh_cong", bot):
-            return True, "Đã hoàn thành tu luyện hôm nay!"
+        if (
+            has_activity(discord_id, "tu_luyen", bot)
+            or has_activity(discord_id, "tu_luyen_thanh_cong", bot)
+            or has_activity(discord_id, "dot_pha", bot)
+            or int(player.get("EXP") or 0) > 0
+            or str(player.get("Cảnh giới") or "").strip() != "Luyện Khí tầng 1"
+        ):
+            return True, "Đã hoàn thành tu luyện!"
         return False, "Bạn chưa bế quan tu luyện hôm nay. Hãy chạy lệnh `/tu_luyen` trước!"
 
     if code == "song_tu":
-        if has_activity(discord_id, "song_tu", bot):
+        partner = player.get("Song tu partner")
+        if (
+            has_activity(discord_id, "song_tu", bot)
+            or (partner and str(partner).strip() not in ["", "None"])
+        ):
             return True, "Đã hoàn thành song tu hôm nay!"
         return False, "Bạn chưa thực hiện song tu hôm nay. Hãy dùng `/song_tu [@đồng_đạo]`!"
 
@@ -202,17 +212,21 @@ def check_quest_condition(discord_id: str, quest: dict, player: dict, inventory:
         return False, "Bạn chưa tấn công Boss hôm nay. Hãy dùng lệnh `/tancong`!"
 
     if code == "che_dan":
-        if has_activity(discord_id, "che_dan", bot):
-            return True, "Đã mở lò luyện đan hôm nay!"
+        has_herbs_or_pills = any(
+            any(kw in item for kw in ["Đan", "Thuốc", "Hoa", "Cỏ", "Thảo", "Lô"])
+            for item, cnt in inventory.items() if cnt > 0
+        )
+        if has_activity(discord_id, "che_dan", bot) or has_herbs_or_pills:
+            return True, "Đã mở lò luyện đan / sở hữu linh đan!"
         return False, "Bạn chưa luyện đan hôm nay. Hãy dùng lệnh `/che_dan`!"
 
     if code == "dung_dan":
-        if has_activity(discord_id, "dung_dan", bot):
+        if has_activity(discord_id, "dung_dan", bot) or int(player.get("Buff đột phá") or 0) > 0:
             return True, "Đã cắn đan dược hôm nay!"
         return False, "Bạn chưa sử dụng linh đan hôm nay. Hãy dùng lệnh `/dung_dan [tên_đan]` trước!"
 
     if code in ["mua_shop", "mua_hang"]:
-        if any(has_activity(discord_id, act, bot) for act in ["mua_shop", "mua_hang", "mua"]):
+        if any(has_activity(discord_id, act, bot) for act in ["mua_shop", "mua_hang", "mua"]) or len(inventory) > 2:
             return True, "Đã giao dịch mua hàng tại Bảo Các!"
         return False, "Bạn chưa mua hàng tại Bảo Các. Hãy xem `/shop` và mua bằng `/mua [tên_vật_phẩm]`!"
 
