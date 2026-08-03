@@ -44,17 +44,23 @@ def has_activity(discord_id: str, activity_name: str) -> bool:
     key = f"{discord_id}_{today}"
     return activity_name in USER_ACTIVITIES.get(key, set())
 
-def is_quest_claimed(discord_id: str, quest_id: str) -> bool:
+def is_quest_claimed(discord_id: str, quest_id: str, bot=None) -> bool:
     today = datetime.now().strftime("%Y-%m-%d")
     key = f"{discord_id}_{today}"
-    return quest_id in USER_QUEST_CLAIMS.get(key, set())
+    if quest_id in USER_QUEST_CLAIMS.get(key, set()):
+        return True
+    if bot and hasattr(bot, "excel_manager"):
+        return bot.excel_manager._sync_is_quest_claimed(discord_id, quest_id)
+    return False
 
-def mark_quest_claimed(discord_id: str, quest_id: str):
+def mark_quest_claimed(discord_id: str, quest_id: str, bot=None):
     today = datetime.now().strftime("%Y-%m-%d")
     key = f"{discord_id}_{today}"
     if key not in USER_QUEST_CLAIMS:
         USER_QUEST_CLAIMS[key] = set()
     USER_QUEST_CLAIMS[key].add(quest_id)
+    if bot and hasattr(bot, "excel_manager"):
+        bot.excel_manager._sync_mark_quest_claimed(discord_id, quest_id)
 
 QUESTS = [
     {
@@ -106,11 +112,11 @@ QUESTS = [
         "name": "🧪 Sơ Nhập Đan Đạo",
         "activity_code": "che_dan",
         "req_command": "/che_dan",
-        "desc": "Khai mở Dược Lô luyện đan hoặc sở hữu linh đan trong túi đồ.",
+        "desc": "Khai mở Dược Lô luyện đan thành công.",
         "reward_lt": 800,
         "reward_exp": 1200,
         "reward_item": "U Nhược Hoa",
-        "hint": "Thực hiện `/che_dan` HOẶC sở hữu đan dược trong `/tui_do`!"
+        "hint": "Thực hiện lệnh `/che_dan` để nhóm lửa luyện đan!"
     },
     {
         "id": "6",
@@ -157,15 +163,14 @@ def check_quest_condition(discord_id: str, quest: dict, player: dict, inventory:
         return False, "Bạn chưa báo danh hôm nay. Hãy chạy lệnh `/diem_danh` trước!"
 
     if code == "tu_luyen":
-        if has_activity(discord_id, "tu_luyen") or int(player.get("EXP") or 0) >= 50:
-            return True, "Đã hoàn thành tu luyện!"
+        if has_activity(discord_id, "tu_luyen"):
+            return True, "Đã hoàn thành tu luyện hôm nay!"
         return False, "Bạn chưa bế quan tu luyện hôm nay. Hãy chạy lệnh `/tu_luyen` trước!"
 
     if code == "song_tu":
-        partner = player.get("Song tu partner")
-        if has_activity(discord_id, "song_tu") or (partner and str(partner).strip() != ""):
-            return True, "Đã hoàn thành song tu!"
-        return False, "Bạn chưa thực hiện song tu. Hãy dùng `/song_tu [@đồng_đạo]`!"
+        if has_activity(discord_id, "song_tu"):
+            return True, "Đã hoàn thành song tu hôm nay!"
+        return False, "Bạn chưa thực hiện song tu hôm nay. Hãy dùng `/song_tu [@đồng_đạo]`!"
 
     if code == "tancong_boss":
         if has_activity(discord_id, "tancong_boss"):
@@ -173,10 +178,9 @@ def check_quest_condition(discord_id: str, quest: dict, player: dict, inventory:
         return False, "Bạn chưa tấn công Boss hôm nay. Hãy dùng lệnh `/tancong`!"
 
     if code == "che_dan":
-        has_dan_in_inv = any("Đan" in item for item, cnt in inventory.items() if cnt > 0)
-        if has_activity(discord_id, "che_dan") or has_dan_in_inv:
-            return True, "Đã có đan dược / hoàn thành chế đan!"
-        return False, "Bạn chưa chế đan hoặc không có đan dược trong túi. Hãy dùng lệnh `/che_dan` hoặc sở hữu đan dược!"
+        if has_activity(discord_id, "che_dan"):
+            return True, "Đã mở lò luyện đan hôm nay!"
+        return False, "Bạn chưa luyện đan hôm nay. Hãy dùng lệnh `/che_dan`!"
 
     if code == "dung_dan":
         if has_activity(discord_id, "dung_dan"):
@@ -194,6 +198,98 @@ def check_quest_condition(discord_id: str, quest: dict, player: dict, inventory:
         return False, "Bạn chưa tham gia sự kiện Tông Môn nào hôm nay!"
 
     return False, "Chưa hoàn thành điều kiện."
+
+async def claim_all_quests_for_user(bot, discord_id: str, username: str) -> tuple[discord.Embed, int]:
+    """Claims all completed and unclaimed quests for a given user at once."""
+    player = await bot.excel_manager.get_or_create_player(discord_id, username)
+    inventory = await bot.excel_manager.get_inventory(discord_id)
+
+    ready_quests = []
+    for q in QUESTS:
+        if not is_quest_claimed(discord_id, q["id"], bot):
+            ok, _ = check_quest_condition(discord_id, q, player, inventory)
+            if ok:
+                ready_quests.append(q)
+
+    if not ready_quests:
+        embed = discord.Embed(
+            title="📜 Không Có Nhiệm Vụ Nào Chờ Nhận",
+            description=(
+                f"Tu sĩ **{player.get('Tên')}** chưa có nhiệm vụ nào đủ điều kiện hoặc đã nhận hết tất cả thưởng hôm nay rồi!\n\n"
+                f"👉 **Hướng dẫn thực hiện các nhiệm vụ hôm nay**:\n"
+                f"• `/diem_danh` — Báo danh nhận Linh Thạch & EXP\n"
+                f"• `/tu_luyen` — Bế quan tu luyện linh khí\n"
+                f"• `/song_tu` — Mời đồng đạo song tu hòa hợp\n"
+                f"• `/tancong` — Tấn công Boss Thượng Cổ Thiên Ma\n"
+                f"• `/che_dan` — Khai mở Dược Lô luyện đan\n"
+                f"• `/dung_dan` — Sử dụng 1 viên Linh Đan\n"
+                f"• `/mua` — Mua hàng tại Bảo Các Tông Môn\n"
+                f"• `/thamgia` / `/nhan_co_duyen` — Tham gia sự kiện Tông Môn"
+            ),
+            color=discord.Color.orange()
+        )
+        return embed, 0
+
+    total_lt = 0
+    total_exp = 0
+    items_added = {}
+    claimed_lines = []
+
+    for q in ready_quests:
+        mark_quest_claimed(discord_id, q["id"], bot)
+        total_lt += q["reward_lt"]
+        total_exp += q["reward_exp"]
+        item = q["reward_item"]
+        items_added[item] = items_added.get(item, 0) + 1
+        claimed_lines.append(f"✅ **{q['name']}**: `+{q['reward_lt']}` 💎 LT | `+{q['reward_exp']}` ✨ EXP | `1x {item}` 🌿")
+
+    # Update player stats & inventory
+    await bot.excel_manager.add_exp(discord_id, total_exp)
+    await bot.excel_manager.add_linh_thach(discord_id, total_lt)
+    for item, qty in items_added.items():
+        await bot.excel_manager.add_item(discord_id, item, qty)
+
+    updated_player = await bot.excel_manager.get_player(discord_id)
+    items_str = ", ".join([f"`{qty}x {item}`" for item, qty in items_added.items()])
+
+    embed = discord.Embed(
+        title=f"🎉 TỰ ĐỘNG NHẬN TẤT CẢ THƯỞNG ({len(ready_quests)} NHIỆM VỤ)!",
+        description=(
+            f"Tu sĩ **{player.get('Tên')}** đã hoàn tất & nhận trọn bộ phần thưởng **{len(ready_quests)} nhiệm vụ**:\n\n"
+            + "\n".join(claimed_lines) + "\n\n"
+            f"🎁 **TỔNG CỘNG PHẦN THƯỞNG**:\n"
+            f"• `+{total_lt:,}` 💎 Linh Thạch\n"
+            f"• `+{total_exp:,}` ✨ EXP Tu vi\n"
+            f"• Vật phẩm: {items_str} 🌿 (Đã chuyển vào Túi Đồ)\n\n"
+            f"📊 Linh Thạch hiện tại: `{updated_player.get('Linh thạch'):,}` 💎 | EXP: `{updated_player.get('EXP'):,}` ✨"
+        ),
+        color=discord.Color.green()
+    )
+    return embed, len(ready_quests)
+
+class NhanTatCaNhiemVuView(discord.ui.View):
+    def __init__(self, bot, author_id: str):
+        super().__init__(timeout=120)
+        self.bot = bot
+        self.author_id = str(author_id)
+
+    @discord.ui.button(label="🎁 Nhận Tất Cả Thưởng Nhiệm Vụ", style=discord.ButtonStyle.success, emoji="📜")
+    async def claim_all_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if str(interaction.user.id) != self.author_id:
+            await interaction.response.send_message("❌ Lệnh này chỉ dành cho tu sĩ đã mở bảng nhiệm vụ!", ephemeral=True)
+            return
+
+        discord_id = str(interaction.user.id)
+        username = interaction.user.display_name
+
+        embed, claimed_count = await claim_all_quests_for_user(self.bot, discord_id, username)
+
+        if claimed_count > 0:
+            for child in self.children:
+                child.disabled = True
+            await interaction.response.edit_message(embed=embed, view=self)
+        else:
+            await interaction.response.send_message(embed=embed, ephemeral=True)
 
 class EconomyCog(commands.Cog):
     def __init__(self, bot):
@@ -490,8 +586,8 @@ class EconomyCog(commands.Cog):
         )
         await interaction.response.send_message(embed=embed)
 
-    @app_commands.command(name="nhiemvu", description="Bảng Nhiệm Vụ Hoạt Động Tông Môn — Hoàn thành để nhận thưởng!")
-    @app_commands.describe(chon_nhiem_vu="Nhập số (1-8) để nhận thưởng (để trống để xem danh sách)")
+    @app_commands.command(name="nhiemvu", description="Bảng Nhiệm Vụ Hoạt Động Tông Môn — Hoàn thành để tự động nhận tất cả thưởng!")
+    @app_commands.describe(chon_nhiem_vu="Nhập số (1-8) để nhận 1 cái, hoặc để trống / gõ 'all' để tự động gom TẤT CẢ thưởng đã hoàn thành")
     async def nhiemvu(self, interaction: discord.Interaction, chon_nhiem_vu: str = ""):
         if self.bot.channel_id and interaction.channel_id != self.bot.channel_id:
             await interaction.response.send_message("❌ Lệnh này chỉ hoạt động trong kênh tông môn quy định!", ephemeral=True)
@@ -499,31 +595,43 @@ class EconomyCog(commands.Cog):
 
         discord_id = str(interaction.user.id)
         username = interaction.user.display_name
-        player = await self.bot.excel_manager.get_or_create_player(discord_id, username)
-        inventory = await self.bot.excel_manager.get_inventory(discord_id)
+        cleaned_input = chon_nhiem_vu.strip().lower()
 
-        if not chon_nhiem_vu:
-            embed = discord.Embed(
+        # If empty or explicitly asking for all ("all", "tat_ca", "0", etc.):
+        if not cleaned_input or cleaned_input in ["all", "tat_ca", "nhan_tat_ca", "0", "tất cả", "nhận tất cả"]:
+            # Automatically claim all completed & unclaimed quests at once
+            embed, claimed_count = await claim_all_quests_for_user(self.bot, discord_id, username)
+
+            if claimed_count > 0:
+                # Successfully claimed 1 or more completed quests!
+                await interaction.response.send_message(embed=embed)
+                return
+
+            # If no unclaimed completed quests were ready, display the full Quest Board Embed along with interactive "Nhận Tất Cả" button
+            player = await self.bot.excel_manager.get_or_create_player(discord_id, username)
+            inventory = await self.bot.excel_manager.get_inventory(discord_id)
+
+            board_embed = discord.Embed(
                 title="📜 BẢNG NHIỆM VỤ HOẠT ĐỘNG TÔNG MÔN",
                 description=(
                     f"Chào tu sĩ **{player.get('Tên')}**! Hoàn thành hoạt động hàng ngày để nhận thưởng.\n"
-                    f"👉 **Cú pháp nhận thưởng**: `/nhiemvu [số 1-8]`"
+                    f"👉 **Mẹo**: Khi làm xong hoạt động, gõ `/nhiemvu` hoặc bấm nút **[🎁 Nhận Tất Cả Thưởng]** bên dưới để gom toàn bộ phần thưởng cùng lúc!"
                 ),
                 color=discord.Color.blue()
             )
 
             for idx, q in enumerate(QUESTS, 1):
-                claimed = is_quest_claimed(discord_id, q["id"])
+                claimed = is_quest_claimed(discord_id, q["id"], self.bot)
                 ok, note = check_quest_condition(discord_id, q, player, inventory)
 
                 if claimed:
                     status = "🟢 `[ĐÃ HOÀN THÀNH HÔM NAY]`"
                 elif ok:
-                    status = f"✨ `[ĐÃ ĐỦ ĐIỀU KIỆN — Gõ /nhiemvu {idx} để nhận]`"
+                    status = f"✨ `[ĐÃ ĐỦ ĐIỀU KIỆN — Gõ /nhiemvu {idx} hoặc bấm Nhận Tất Cả]`"
                 else:
                     status = f"🔒 `[CHƯA HOÀN THÀNH — {q['req_command']}]`"
 
-                embed.add_field(
+                board_embed.add_field(
                     name=f"Nhiệm vụ #{idx}: {q['name']} — {status}",
                     value=(
                         f"└ *{q['desc']}*\n"
@@ -533,26 +641,28 @@ class EconomyCog(commands.Cog):
                     inline=False
                 )
 
-            embed.set_footer(text="Nhiệm vụ tông môn tự reset hàng ngày!")
-            await interaction.response.send_message(embed=embed)
+            board_embed.set_footer(text="Nhiệm vụ tông môn tự động reset hàng ngày!")
+            view = NhanTatCaNhiemVuView(self.bot, discord_id)
+            await interaction.response.send_message(embed=board_embed, view=view)
             return
 
-        # Execute / claim selected quest
+        # Execute / claim single selected quest (e.g. /nhiemvu 3)
         selected_quest = None
-        cleaned_input = chon_nhiem_vu.strip()
-
         if cleaned_input in [str(i) for i in range(1, len(QUESTS) + 1)]:
             idx = int(cleaned_input) - 1
             selected_quest = QUESTS[idx]
 
         if not selected_quest:
             await interaction.response.send_message(
-                f"❌ Số nhiệm vụ không hợp lệ (1-{len(QUESTS)}). Gõ `/nhiemvu` để xem danh sách!",
+                f"❌ Số nhiệm vụ không hợp lệ (1-{len(QUESTS)}). Gõ `/nhiemvu` để tự động nhận tất cả hoặc xem bảng nhiệm vụ!",
                 ephemeral=True
             )
             return
 
-        if is_quest_claimed(discord_id, selected_quest["id"]):
+        player = await self.bot.excel_manager.get_or_create_player(discord_id, username)
+        inventory = await self.bot.excel_manager.get_inventory(discord_id)
+
+        if is_quest_claimed(discord_id, selected_quest["id"], self.bot):
             embed = discord.Embed(
                 title="✅ Đã Nhận Thưởng Hôm Nay",
                 description=f"Tu sĩ **{player.get('Tên')}** đã nhận thưởng nhiệm vụ **{selected_quest['name']}** rồi!",
@@ -575,7 +685,7 @@ class EconomyCog(commands.Cog):
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
-        mark_quest_claimed(discord_id, selected_quest["id"])
+        mark_quest_claimed(discord_id, selected_quest["id"], self.bot)
         await self.bot.excel_manager.add_exp(discord_id, selected_quest["reward_exp"])
         await self.bot.excel_manager.add_linh_thach(discord_id, selected_quest["reward_lt"])
         await self.bot.excel_manager.add_item(discord_id, selected_quest["reward_item"], 1)
@@ -590,7 +700,7 @@ class EconomyCog(commands.Cog):
                 f"• `+{selected_quest['reward_lt']}` 💎 Linh Thạch\n"
                 f"• `+{selected_quest['reward_exp']}` ✨ EXP Tu vi\n"
                 f"• `1x {selected_quest['reward_item']}` 🌿 (Đã vào Túi Đồ)\n\n"
-                f"📊 Linh Thạch hiện tại: `{updated_player.get('Linh thạch')}` 💎 | EXP: `{updated_player.get('EXP')}` ✨"
+                f"📊 Linh Thạch hiện tại: `{updated_player.get('Linh thạch'):,}` 💎 | EXP: `{updated_player.get('EXP'):,}` ✨"
             ),
             color=discord.Color.green()
         )

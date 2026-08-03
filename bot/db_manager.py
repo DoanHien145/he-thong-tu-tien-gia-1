@@ -556,6 +556,33 @@ class DatabaseManager:
         conn.close()
         return [dict(r) for r in rows]
 
+    # --- Persistent Quests Claimed Methods ---
+    async def is_quest_claimed(self, discord_id: str, quest_id: str) -> bool:
+        return await asyncio.to_thread(self._sync_is_quest_claimed, str(discord_id), quest_id)
+
+    def _sync_is_quest_claimed(self, discord_id: str, quest_id: str) -> bool:
+        today = datetime.now().strftime("%Y-%m-%d")
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1 FROM quests_claimed WHERE date = ? AND discord_id = ? AND quest_id = ?", (today, str(discord_id), str(quest_id)))
+        row = cursor.fetchone()
+        conn.close()
+        return row is not None
+
+    async def mark_quest_claimed(self, discord_id: str, quest_id: str):
+        await asyncio.to_thread(self._sync_mark_quest_claimed, str(discord_id), quest_id)
+
+    def _sync_mark_quest_claimed(self, discord_id: str, quest_id: str):
+        today = datetime.now().strftime("%Y-%m-%d")
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT OR IGNORE INTO quests_claimed (date, discord_id, quest_id)
+            VALUES (?, ?, ?)
+        """, (today, str(discord_id), str(quest_id)))
+        conn.commit()
+        conn.close()
+
     async def export_to_excel(self, excel_path: str = "data/data.xlsx"):
         """Generates dynamic Excel dump from SQLite for download endpoints."""
         await asyncio.to_thread(self._sync_export_to_excel, excel_path)
