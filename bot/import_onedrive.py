@@ -11,12 +11,19 @@ from bot.logger import logger
 
 DEFAULT_ONEDRIVE_URL = "https://1drv.ms/x/c/1dfac0546fe61b6e/IQC9j1b-bjt9T6mwEm3lLVsNAQujbSTEvbu_XQABciWtcNU?e=RGzo92"
 
+def col_to_idx(col_str: str) -> int:
+    idx = 0
+    for char in col_str:
+        idx = idx * 26 + (ord(char.upper()) - ord('A') + 1)
+    return idx - 1
+
 def download_and_import_onedrive(
     onedrive_url: str = DEFAULT_ONEDRIVE_URL,
     db_file: str = "data/cultivation.db"
 ):
     """
-    Downloads Excel file from OneDrive share link dynamically and imports player data directly into SQLite database.
+    Downloads Excel file from OneDrive share link dynamically and imports player data and inventory directly into SQLite database.
+    Handles exact openxml cell positioning and multi-sheet structures (Players & Inventory).
     """
     os.makedirs(os.path.dirname(db_file), exist_ok=True)
     temp_excel = "data/onedrive_import_temp.xlsx"
@@ -29,8 +36,8 @@ def download_and_import_onedrive(
     ]
 
     try:
-        # Step 1: Always open share link first to establish session cookies
-        share_url = onedrive_url
+        # Step 1: Open share link to establish session cookies
+        share_url = onedrive_url if "1drv.ms" in onedrive_url else DEFAULT_ONEDRIVE_URL
         resp = opener.open(share_url)
         final_url = resp.geturl()
         html = resp.read().decode('utf-8', errors='ignore')
@@ -63,40 +70,11 @@ def download_and_import_onedrive(
         logger.error(f"Lỗi khi tải OneDrive file: {e}")
         raise e
 
-    # Step 3: Parse XLSX via zipfile
-    with zipfile.ZipFile(temp_excel, 'r') as z:
-        shared_strings = []
-        if 'xl/sharedStrings.xml' in z.namelist():
-            tree = ET.fromstring(z.read('xl/sharedStrings.xml'))
-            for elem in tree.iter('{http://schemas.openxmlformats.org/spreadsheetml/2006/main}t'):
-                shared_strings.append(elem.text or '')
-
-        sheet_files = [f for f in z.namelist() if f.startswith('xl/worksheets/sheet')]
-        if not sheet_files:
-            raise ValueError("File Excel không chứa worksheet hợp lệ.")
-
-        tree = ET.fromstring(z.read(sheet_files[0]))
-        rows = []
-        for row in tree.iter('{http://schemas.openxmlformats.org/spreadsheetml/2006/main}row'):
-            row_vals = []
-            for c in row.iter('{http://schemas.openxmlformats.org/spreadsheetml/2006/main}c'):
-                t = c.get('t')
-                v_elem = c.find('{http://schemas.openxmlformats.org/spreadsheetml/2006/main}v')
-                v = v_elem.text if v_elem is not None else ''
-                if t == 's' and v != '':
-                    v = shared_strings[int(v)]
-                row_vals.append(v)
-            if row_vals:
-                rows.append(row_vals)
-
-    if not rows or len(rows) < 2:
-        logger.warning("File Excel không có dòng dữ liệu nhân vật nào.")
-        return 0, 0
-
+    # Step 3: Parse XLSX sheets with openxml cell coordinates
     conn = sqlite3.connect(db_file)
     cursor = conn.cursor()
 
-    # Ensure tables exist
+    # Ensure database schema exists
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS players (
             discord_id TEXT PRIMARY KEY,
@@ -125,63 +103,141 @@ def download_and_import_onedrive(
         )
     """)
 
-    created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     imported_players = 0
     imported_items = 0
 
-    for row in rows[1:]:
-        if len(row) < 3:
-            continue
-        discord_id = str(row[0]).strip()
-        username = str(row[1]).strip() if len(row) > 1 else "Tu sĩ"
-        ten = str(row[2]).strip() if len(row) > 2 and row[2] else username
-        canh_gioi = str(row[3]).strip() if len(row) > 3 else "Luyện Khí tầng 1"
-        try: exp = int(row[4])
-        except: exp = 0
-        try: linh_thach = int(row[5])
-        except: linh_thach = 100
-        linh_can = str(row[6]).strip() if len(row) > 6 else "Thiên Linh Căn"
-        try: hp = int(row[7]) if len(row) > 7 else 100
-        except: hp = 100
-        try: mana = int(row[8]) if len(row) > 8 else 100
-        except: mana = 100
-        ngay_diem_danh = str(row[9]).strip() if len(row) > 9 else ""
-        tui_do_str = str(row[10]).strip() if len(row) > 10 else "{}"
-        try: buff_dot_pha = int(row[11]) if len(row) > 11 else 0
-        except: buff_dot_pha = 0
+    with zipfile.ZipFile(temp_excel, 'r') as z:
+        shared_strings = []
+        if 'xl/sharedStrings.xml' in z.namelist():
+            tree = ET.fromstring(z.read('xl/sharedStrings.xml'))
+            for elem in tree.iter('{http://schemas.openxmlformats.org/spreadsheetml/2006/main}t'):
+                shared_strings.append(elem.text or '')
 
-        cursor.execute("""
-            INSERT INTO players (
-                discord_id, name, canh_gioi, exp, linh_thach, hp, mana, linh_can, ngay_diem_danh, buff_dot_pha, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(discord_id) DO UPDATE SET
-                name = excluded.name,
-                canh_gioi = excluded.canh_gioi,
-                exp = excluded.exp,
-                linh_thach = excluded.linh_thach,
-                hp = excluded.hp,
-                mana = excluded.mana,
-                linh_can = excluded.linh_can,
-                ngay_diem_danh = excluded.ngay_diem_danh,
-                buff_dot_pha = excluded.buff_dot_pha
-        """, (
-            discord_id, ten, canh_gioi, exp, linh_thach, hp, mana, linh_can, ngay_diem_danh, buff_dot_pha, created_at
-        ))
-        imported_players += 1
+        sheet_files = [f for f in z.namelist() if f.startswith('xl/worksheets/sheet')]
+        if not sheet_files:
+            raise ValueError("File Excel không chứa worksheet hợp lệ.")
 
-        if tui_do_str.startswith("{"):
-            try:
-                inv_dict = json.loads(tui_do_str)
-                for item_name, qty in inv_dict.items():
-                    if int(qty) > 0:
+        for sheet_file in sheet_files:
+            tree = ET.fromstring(z.read(sheet_file))
+            sheet_rows = []
+            for row_elem in tree.iter('{http://schemas.openxmlformats.org/spreadsheetml/2006/main}row'):
+                row_cells = {}
+                max_col = 0
+                for c in row_elem.iter('{http://schemas.openxmlformats.org/spreadsheetml/2006/main}c'):
+                    cell_ref = c.get('r')
+                    if cell_ref:
+                        col_str = ''.join([ch for ch in cell_ref if ch.isalpha()])
+                        col_i = col_to_idx(col_str)
+                    else:
+                        col_i = max_col
+                    max_col = max(max_col, col_i + 1)
+
+                    t = c.get('t')
+                    v_elem = c.find('{http://schemas.openxmlformats.org/spreadsheetml/2006/main}v')
+                    v = v_elem.text if v_elem is not None else ''
+                    if t == 's' and v != '':
+                        v = shared_strings[int(v)]
+                    row_cells[col_i] = v.strip()
+
+                row_vals = [row_cells.get(i, '') for i in range(max_col)]
+                if any(row_vals):
+                    sheet_rows.append(row_vals)
+
+            if not sheet_rows:
+                continue
+
+            header = [h.lower() for h in sheet_rows[0]]
+
+            # Detect Players Sheet
+            if any('cảnh giới' in h or 'canh gioi' in h or 'exp' in h for h in header):
+                col_map = {}
+                for idx, h in enumerate(header):
+                    if 'discord' in h or 'id' in h: col_map['discord_id'] = idx
+                    elif 'tên' in h or 'ten' in h or 'name' in h: col_map['name'] = idx
+                    elif 'cảnh giới' in h or 'canh gioi' in h: col_map['canh_gioi'] = idx
+                    elif 'exp' in h or 'tu vi' in h: col_map['exp'] = idx
+                    elif 'thạch' in h or 'thach' in h: col_map['linh_thach'] = idx
+                    elif 'hp' in h: col_map['hp'] = idx
+                    elif 'mana' in h: col_map['mana'] = idx
+                    elif 'căn' in h or 'can' in h: col_map['linh_can'] = idx
+                    elif 'điểm danh' in h or 'diem danh' in h: col_map['ngay_diem_danh'] = idx
+                    elif 'buff' in h: col_map['buff_dot_pha'] = idx
+
+                created_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+                for r in sheet_rows[1:]:
+                    def get_val(key, default=''):
+                        idx = col_map.get(key)
+                        if idx is not None and idx < len(r):
+                            return r[idx]
+                        return default
+
+                    discord_id = get_val('discord_id')
+                    if not discord_id or not discord_id.isdigit():
+                        continue
+
+                    name = get_val('name', 'Tu sĩ')
+                    canh_gioi = get_val('canh_gioi', 'Luyện Khí tầng 1')
+
+                    try: exp = int(get_val('exp', 0))
+                    except: exp = 0
+
+                    try: linh_thach = int(get_val('linh_thach', 100))
+                    except: linh_thach = 100
+
+                    try: hp = int(get_val('hp', 100))
+                    except: hp = 100
+
+                    try: mana = int(get_val('mana', 100))
+                    except: mana = 100
+
+                    linh_can = get_val('linh_can', 'Thiên Linh Căn')
+
+                    ngay_diem_danh = get_val('ngay_diem_danh', '')
+                    if ngay_diem_danh == '{}' or not ngay_diem_danh.startswith('20'):
+                        ngay_diem_danh = ''
+
+                    try: buff_dot_pha = int(get_val('buff_dot_pha', 0))
+                    except: buff_dot_pha = 0
+
+                    cursor.execute("""
+                        INSERT INTO players (
+                            discord_id, name, canh_gioi, exp, linh_thach, hp, mana, linh_can, ngay_diem_danh, buff_dot_pha, created_at
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        ON CONFLICT(discord_id) DO UPDATE SET
+                            name = excluded.name,
+                            canh_gioi = excluded.canh_gioi,
+                            exp = excluded.exp,
+                            linh_thach = excluded.linh_thach,
+                            hp = excluded.hp,
+                            mana = excluded.mana,
+                            linh_can = excluded.linh_can,
+                            ngay_diem_danh = excluded.ngay_diem_danh,
+                            buff_dot_pha = excluded.buff_dot_pha
+                    """, (discord_id, name, canh_gioi, exp, linh_thach, hp, mana, linh_can, ngay_diem_danh, buff_dot_pha, created_at))
+                    imported_players += 1
+
+            # Detect Inventory Sheet
+            elif any('vật phẩm' in h or 'vat pham' in h for h in header):
+                inv_map = {}
+                for idx, h in enumerate(header):
+                    if 'discord' in h or 'id' in h: inv_map['discord_id'] = idx
+                    elif 'vật phẩm' in h or 'vat pham' in h or 'item' in h: inv_map['item_name'] = idx
+                    elif 'số lượng' in h or 'so luong' in h or 'qty' in h: inv_map['quantity'] = idx
+
+                for r in sheet_rows[1:]:
+                    discord_id = r[inv_map['discord_id']] if 'discord_id' in inv_map and inv_map['discord_id'] < len(r) else ''
+                    item_name = r[inv_map['item_name']] if 'item_name' in inv_map and inv_map['item_name'] < len(r) else ''
+                    try: qty = int(r[inv_map['quantity']]) if 'quantity' in inv_map and inv_map['quantity'] < len(r) else 0
+                    except: qty = 0
+
+                    if discord_id and item_name and qty > 0:
                         cursor.execute("""
                             INSERT INTO inventory (discord_id, item_name, quantity)
                             VALUES (?, ?, ?)
                             ON CONFLICT(discord_id, item_name) DO UPDATE SET quantity = excluded.quantity
-                        """, (discord_id, item_name, int(qty)))
+                        """, (discord_id, item_name, qty))
                         imported_items += 1
-            except Exception as e:
-                logger.error(f"Lỗi parse túi đồ ID {discord_id}: {e}")
 
     conn.commit()
     conn.close()
@@ -191,3 +247,4 @@ def download_and_import_onedrive(
 
 if __name__ == "__main__":
     download_and_import_onedrive()
+
