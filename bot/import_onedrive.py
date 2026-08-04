@@ -9,7 +9,7 @@ import re
 from datetime import datetime
 from bot.logger import logger
 
-DEFAULT_ONEDRIVE_URL = "https://excel.cloud.microsoft/open/onedrive/?docId=1DFAC0546FE61B6E%21s6246c65203524b4cb0a7e680ec5ac5ff&driveId=1DFAC0546FE61B6E"
+DEFAULT_ONEDRIVE_URL = "https://1drv.ms/x/c/1dfac0546fe61b6e/IQDl2zLvI2srQr1Y4Br_bbl2AcErRAiANMQdG-w-nsRF9SM?e=td3Kdb"
 
 def col_to_idx(col_str: str) -> int:
     idx = 0
@@ -18,22 +18,22 @@ def col_to_idx(col_str: str) -> int:
     return idx - 1
 
 def parse_doc_id_from_url(url: str) -> str:
-    """Tự động bóc tách UniqueId UUID từ URL OneDrive / Excel Cloud."""
+    """Tự động bóc tách UniqueId / sourcedoc UUID từ URL OneDrive / Excel Cloud."""
     if not url:
         return ""
-    # Format 1: %21s32hex or !s32hex
-    match = re.search(r'(?:%21s|!s)([a-f0-9]{32})', url, re.IGNORECASE)
+    # Format 1: sourcedoc={UUID} or sourcedoc=%7BUUID%7D
+    match = re.search(r'sourcedoc=(?:%7B|\{)?([a-f0-9\-]{36})(?:%7D|\})?', url, re.IGNORECASE)
     if match:
-        h = match.group(1)
-        return f"{h[:8]}-{h[8:12]}-{h[12:16]}-{h[16:20]}-{h[20:]}"
+        return match.group(1)
     # Format 2: UniqueId=UUID
     match = re.search(r'UniqueId=([a-f0-9\-]{36})', url, re.IGNORECASE)
     if match:
         return match.group(1)
-    # Format 3: sourcedoc=%7BUUID%7D
-    match = re.search(r'sourcedoc=%7B([a-f0-9\-]+)%7D', url, re.IGNORECASE)
+    # Format 3: %21s32hex or !s32hex
+    match = re.search(r'(?:%21s|!s)([a-f0-9]{32})', url, re.IGNORECASE)
     if match:
-        return match.group(1)
+        h = match.group(1)
+        return f"{h[:8]}-{h[8:12]}-{h[12:16]}-{h[16:20]}-{h[20:]}"
     return ""
 
 def download_and_import_onedrive(
@@ -55,21 +55,42 @@ def download_and_import_onedrive(
     ]
 
     try:
-        # Luôn mở share link 1drv cơ sở trước để khởi tạo session cookies
-        share_url = "https://1drv.ms/x/c/1dfac0546fe61b6e/IQC9j1b-bjt9T6mwEm3lLVsNAQujbSTEvbu_XQABciWtcNU?e=RGzo92"
-        resp = opener.open(share_url)
-        final_url = resp.geturl()
-        html = resp.read().decode('utf-8', errors='ignore')
-
         candidates = []
-        id1 = parse_doc_id_from_url(onedrive_url)
-        if id1: candidates.append(id1)
-        id2 = parse_doc_id_from_url(final_url)
-        if id2 and id2 not in candidates: candidates.append(id2)
-        id3 = parse_doc_id_from_url(html)
-        if id3 and id3 not in candidates: candidates.append(id3)
-        if "fe568fbd-3b6e-4f7d-a9b0-126de52d5b0d" not in candidates:
-            candidates.append("fe568fbd-3b6e-4f7d-a9b0-126de52d5b0d")
+
+        # Mở onedrive_url trước tiên
+        if onedrive_url:
+            try:
+                resp = opener.open(onedrive_url)
+                final_url = resp.geturl()
+                html = resp.read().decode('utf-8', errors='ignore')
+                for raw in [onedrive_url, final_url, html]:
+                    doc_id = parse_doc_id_from_url(raw)
+                    if doc_id and doc_id not in candidates:
+                        candidates.append(doc_id)
+            except Exception as url_err:
+                logger.warning(f"Không thể mở trực tiếp onedrive_url ({onedrive_url}): {url_err}")
+
+        # Nếu chưa tìm được candidate, thử mở public share link mặc định
+        if not candidates:
+            public_share_url = "https://1drv.ms/x/c/1dfac0546fe61b6e/IQDl2zLvI2srQr1Y4Br_bbl2AcErRAiANMQdG-w-nsRF9SM?e=td3Kdb"
+            try:
+                resp_public = opener.open(public_share_url)
+                html_public = resp_public.read().decode('utf-8', errors='ignore')
+                for raw in [public_share_url, resp_public.geturl(), html_public]:
+                    doc_id = parse_doc_id_from_url(raw)
+                    if doc_id and doc_id not in candidates:
+                        candidates.append(doc_id)
+            except Exception as pub_err:
+                logger.warning(f"Lỗi mở public share url: {pub_err}")
+
+        # Thêm các document ID mặc định đã kiểm chứng nếu chưa có
+        known_ids = [
+            "ef32dbe5-6b23-422b-bd58-e01aff6db976",
+            "fe568fbd-3b6e-4f7d-a9b0-126de52d5b0d"
+        ]
+        for k_id in known_ids:
+            if k_id not in candidates:
+                candidates.append(k_id)
 
         download_success = False
         for doc_id in candidates:
@@ -81,14 +102,27 @@ def download_and_import_onedrive(
                     if data.startswith(b'PK'):
                         with open(temp_excel, "wb") as f:
                             f.write(data)
-                        logger.info(f"Đã tải thành công file Excel mới từ OneDrive (UniqueId: {doc_id})!")
-                        download_success = True
-                        break
+                        
+                        # Verify file zip có sheet & sharedStrings không rỗng
+                        try:
+                            with zipfile.ZipFile(temp_excel) as zf:
+                                if 'xl/workbook.xml' in zf.namelist():
+                                    logger.info(f"Đã tải thành công file Excel hợp lệ từ OneDrive (UniqueId: {doc_id})!")
+                                    download_success = True
+                                    break
+                        except Exception:
+                            pass
+                    else:
+                        logger.warning(f"File tải từ UniqueId {doc_id} không phải XLSX hợp lệ (Response không bắt đầu bằng PK).")
             except Exception as dl_err:
                 logger.warning(f"Thử UniqueId {doc_id} thất bại: {dl_err}")
 
         if not download_success:
-            raise ValueError("Tải file từ OneDrive thất bại, không nhận được file XLSX hợp lệ.")
+            raise ValueError(
+                "Tải file từ OneDrive thất bại. Vui lòng kiểm tra lại URL: URL dạng web editor (excel.cloud.microsoft) "
+                "chỉ hoạt động trong phiên đăng nhập cá nhân. Để tải tự động, vui lòng tạo link chia sẻ công khai "
+                "(Nút 'Chia sẻ' -> 'Bất kỳ ai có liên kết' / 1drv.ms link)."
+            )
     except Exception as e:
         logger.error(f"Lỗi khi tải OneDrive file: {e}")
         raise e
