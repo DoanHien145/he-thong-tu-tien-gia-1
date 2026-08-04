@@ -8,25 +8,60 @@ from bot.config import BOSS_ATTACK_COOLDOWN, REALMS
 from bot.logger import logger
 
 SHOP_ITEMS = {
-    # Linh Đan Tu Vi & Đột Phá
-    "Luyện Khí Đan": {"price": 150, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Nhất Phẩm • Cắn đan nhận ngay +300 EXP tu vi"},
-    "Tụ Khí Đan": {"price": 300, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Nhất Phẩm • Gia tăng +20% tỷ lệ đột phá thành công"},
-    "Trúc Cơ Đan": {"price": 800, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Nhị Phẩm • Cắn đan nhận ngay +1500 EXP tu vi"},
-    "Tẩy Tủy Đan": {"price": 1500, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Nhị Phẩm • Gia tăng +35% tỷ lệ đột phá thành công"},
-    "Kim Đan Bảo Đan": {"price": 3500, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Tam Phẩm • Cắn đan nhận ngay +5000 EXP & +50% tỉ lệ đột phá"},
-    "Nguyên Anh Đan": {"price": 8000, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Tứ Phẩm • Cắn đan nhận ngay +15,000 EXP tu vi"},
+    # --- LINH ĐAN TU VI & ĐỘT PHÁ ---
+    # Nhất Phẩm
+    "Luyện Khí Đan": {"price": 150, "sale_chance": 0.85, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Nhất Phẩm • Cắn đan nhận ngay +300 EXP tu vi"},
+    "Tụ Khí Đan": {"price": 300, "sale_chance": 0.80, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Nhất Phẩm • Gia tăng +20% tỷ lệ đột phá thành công"},
+    "Thanh Tâm Đan": {"price": 450, "sale_chance": 0.75, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Nhất Phẩm • +500 EXP tu vi & +10% Buff đột phá"},
+    "Ngưng Nguyệt Đan": {"price": 600, "sale_chance": 0.70, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Nhất Phẩm • +800 EXP tu vi"},
+    "Hồi Xuân Đan": {"price": 500, "sale_chance": 0.80, "type": "dan", "cat": "phuc_hoi", "desc": "Linh đan Phục Hồi • Hồi phục 100 HP & 100 Mana lập tức"},
 
-    # Linh Đan Trợ Chiến & Phục Hồi
-    "Hồi Xuân Đan": {"price": 500, "type": "dan", "cat": "phuc_hoi", "desc": "Linh đan Phục Hồi • Hồi phục 100 HP & 100 Mana lập tức"},
-    "Thần Hành Đan": {"price": 1200, "type": "dan", "cat": "phuc_hoi", "desc": "Linh đan Trợ Chiến • Tăng tỉ lệ chấn áp Tâm Ma khi gặp lôi kiếp"},
+    # Nhị Phẩm (Yêu cầu Trúc Cơ)
+    "Trúc Cơ Đan": {"price": 1200, "sale_chance": 0.55, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Nhị Phẩm • Cắn đan nhận +1,500 EXP tu vi (Yêu cầu Trúc Cơ)"},
+    "Tẩy Tủy Đan": {"price": 2000, "sale_chance": 0.50, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Nhị Phẩm • Gia tăng +35% tỷ lệ đột phá thành công"},
+    "Thần Hành Đan": {"price": 1800, "sale_chance": 0.55, "type": "dan", "cat": "phuc_hoi", "desc": "Linh đan Trợ Chiến • Tăng tỷ lệ chấn áp Tâm Ma khi gặp lôi kiếp"},
+    "Cốt Sủy Đan": {"price": 2800, "sale_chance": 0.45, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Nhị Phẩm • +2,500 EXP & +15% Buff đột phá"},
+    "Tụ Linh Đan": {"price": 3500, "sale_chance": 0.40, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Nhị Phẩm • +4,000 EXP tu vi"},
 
-    # Dược Liệu & Nguyên Liệu
-    "Tam Diệp Thảo": {"price": 50, "type": "nguyen_lieu", "cat": "duoc_lieu", "desc": "Linh thảo cơ bản dùng để luyện chế Luyện Khí Đan & Tụ Khí Đan"},
-    "U Nhược Hoa": {"price": 120, "type": "nguyen_lieu", "cat": "duoc_lieu", "desc": "Dược liệu trung cấp dùng để luyện chế Trúc Cơ Đan"},
-    "Xích Viêm Quả": {"price": 300, "type": "nguyen_lieu", "cat": "duoc_lieu", "desc": "Linh quả hiếm dùng để luyện chế Tẩy Tủy Đan"},
-    "Lôi Linh Quả": {"price": 600, "type": "nguyen_lieu", "cat": "duoc_lieu", "desc": "Linh quả cực hiếm hấp thụ lôi đình dùng luyện Kim Đan Bảo Đan"},
-    "Vạn Năm Linh Chi": {"price": 1500, "type": "nguyen_lieu", "cat": "duoc_lieu", "desc": "Dược liệu thượng phẩm dùng luyện đan dược Nguyên Anh"},
-    "Thiên Niên Tuyết Liên": {"price": 3000, "type": "nguyen_lieu", "cat": "duoc_lieu", "desc": "Tuyết liên ngàn năm ngưng tụ tại đỉnh núi tuyết"}
+    # Tam Phẩm (Yêu cầu Kim Đan)
+    "Kim Đan Bảo Đan": {"price": 8000, "sale_chance": 0.28, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Tam Phẩm • +8,000 EXP & +50% Buff đột phá (Yêu cầu Kim Đan)"},
+    "Ngũ Hành Linh Đan": {"price": 12000, "sale_chance": 0.25, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Tam Phẩm • +12,000 EXP & +30% Buff đột phá"},
+    "Địa Mẫu Đan": {"price": 16000, "sale_chance": 0.20, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Tam Phẩm • +18,000 EXP tu vi cuồng bạo"},
+
+    # Tứ Phẩm (Yêu cầu Nguyên Anh)
+    "Nguyên Anh Đan": {"price": 30000, "sale_chance": 0.12, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Tứ Phẩm • Cắn đan +35,000 EXP tu vi (Yêu cầu Nguyên Anh)"},
+    "Chân Long Đan": {"price": 48000, "sale_chance": 0.10, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Tứ Phẩm • +50,000 EXP & +45% Buff đột phá"},
+    "Phượng Hoàng Niết Bàn Đan": {"price": 75000, "sale_chance": 0.08, "type": "dan", "cat": "phuc_hoi", "desc": "Thần đan Tứ Phẩm • +75,000 EXP & Phục hồi toàn bộ HP/Mana"},
+
+    # Ngũ Phẩm (Yêu cầu Hóa Thần)
+    "Hóa Thần Đan": {"price": 150000, "sale_chance": 0.04, "type": "dan", "cat": "tu_vi", "desc": "Thượng Cổ Thần Đan • +150,000 EXP & +60% Buff đột phá (Yêu cầu Hóa Thần)"},
+    "Thái Sơ Hóa Đan": {"price": 350000, "sale_chance": 0.02, "type": "dan", "cat": "tu_vi", "desc": "Chí Tôn Chí Bảo • +300,000 EXP & +75% Buff đột phá (Yêu cầu Hóa Thần)"},
+
+    # --- DƯỢC LIỆU & NGUYÊN LIỆU ---
+    # Nhất Phẩm
+    "Tam Diệp Thảo": {"price": 50, "sale_chance": 0.90, "type": "nguyen_lieu", "cat": "duoc_lieu", "desc": "Linh thảo cơ bản dùng để chế Luyện Khí Đan & Tụ Khí Đan"},
+    "Bích Ngọc Liên": {"price": 120, "sale_chance": 0.80, "type": "nguyen_lieu", "cat": "duoc_lieu", "desc": "Ngọc liên thanh tâm dùng để luyện chế Thanh Tâm Đan"},
+    "U Nhược Hoa": {"price": 180, "sale_chance": 0.75, "type": "nguyen_lieu", "cat": "duoc_lieu", "desc": "Dược liệu trung cấp dùng để luyện chế Trúc Cơ Đan"},
+
+    # Nhị Phẩm
+    "Cửu Diệp Nguyệt Thảo": {"price": 350, "sale_chance": 0.60, "type": "nguyen_lieu", "cat": "duoc_lieu", "desc": "Cỏ chín lá hấp thụ nguyệt hoa dùng chế Ngưng Nguyệt & Tụ Linh Đan"},
+    "Hóa Cốt Thảo": {"price": 500, "sale_chance": 0.55, "type": "nguyen_lieu", "cat": "duoc_lieu", "desc": "Thảo dược rèn thể dùng chế Cốt Sủy Đan"},
+    "Xích Viêm Quả": {"price": 600, "sale_chance": 0.50, "type": "nguyen_lieu", "cat": "duoc_lieu", "desc": "Linh quả hiếm chứa hỏa thuộc tính dùng chế Tẩy Tủy Đan"},
+
+    # Tam Phẩm
+    "Địa Mẫu Tinh Tủy": {"price": 1800, "sale_chance": 0.32, "type": "nguyen_lieu", "cat": "duoc_lieu", "desc": "Tinh tủy lòng đất dùng chế Địa Mẫu Đan"},
+    "Ngũ Hành Quả": {"price": 2500, "sale_chance": 0.28, "type": "nguyen_lieu", "cat": "duoc_lieu", "desc": "Quả tích tụ linh khí ngũ hành dùng chế Ngũ Hành Linh Đan"},
+    "Lôi Linh Quả": {"price": 3500, "sale_chance": 0.25, "type": "nguyen_lieu", "cat": "duoc_lieu", "desc": "Linh quả hấp thụ lôi đình dùng chế Kim Đan Bảo Đan"},
+
+    # Tứ Phẩm
+    "Vạn Năm Linh Chi": {"price": 6000, "sale_chance": 0.18, "type": "nguyen_lieu", "cat": "duoc_lieu", "desc": "Dược liệu thượng phẩm ngàn năm dùng chế Nguyên Anh Đan"},
+    "Long Dược Căn": {"price": 12000, "sale_chance": 0.12, "type": "nguyen_lieu", "cat": "duoc_lieu", "desc": "Rễ linh thảo chứa long khí dùng chế Chân Long Đan"},
+    "Phượng Hoàng Hoa": {"price": 18000, "sale_chance": 0.10, "type": "nguyen_lieu", "cat": "duoc_lieu", "desc": "Đóa hoa mọc nơi Phượng Hoàng niết bàn dùng chế Niết Bàn Đan"},
+    "Thiên Niên Tuyết Liên": {"price": 25000, "sale_chance": 0.08, "type": "nguyen_lieu", "cat": "duoc_lieu", "desc": "Tuyết liên ngàn năm ngưng tụ đỉnh núi tuyết kiếp"},
+
+    # Ngũ Phẩm
+    "Hóa Thần Thảo": {"price": 60000, "sale_chance": 0.04, "type": "nguyen_lieu", "cat": "duoc_lieu", "desc": "Thần dược sinh trưởng ngàn năm dùng chế Hóa Thần Đan"},
+    "Thái Sơ Linh Chi": {"price": 120000, "sale_chance": 0.02, "type": "nguyen_lieu", "cat": "duoc_lieu", "desc": "Báu vật thời Thái Sơ dùng chế Thái Sơ Hóa Đan"}
 }
 
 USER_ACTIVITIES: dict[str, set[str]] = {}
@@ -344,18 +379,41 @@ class EconomyCog(commands.Cog):
             self.shop_last_refresh = now
             self.shop_stock = {}
             self.user_purchases = {}
-            all_items = list(SHOP_ITEMS.items())
-            num_items = random.randint(6, min(10, len(all_items)))
-            chosen_items = random.sample(all_items, num_items)
+
+            # Filter items based on sale_chance
+            available = []
+            for name, info in SHOP_ITEMS.items():
+                chance = info.get("sale_chance", 0.5)
+                if random.random() <= chance:
+                    available.append((name, info))
+
+            # Guarantee at least 5 items if available list is too small
+            if len(available) < 5:
+                basic_names = ["Tam Diệp Thảo", "Luyện Khí Đan", "Bích Ngọc Liên", "Hồi Xuân Đan", "Tụ Khí Đan"]
+                for b_name in basic_names:
+                    if b_name in SHOP_ITEMS and not any(item[0] == b_name for item in available):
+                        available.append((b_name, SHOP_ITEMS[b_name]))
+
+            num_items = min(len(available), random.randint(8, 12))
+            chosen_items = random.sample(available, num_items)
 
             for name, info in chosen_items:
-                stock_qty = random.randint(3, 12)
+                price = info["price"]
+                if price <= 500:
+                    stock_qty = random.randint(6, 15)
+                elif price <= 3000:
+                    stock_qty = random.randint(4, 8)
+                elif price <= 20000:
+                    stock_qty = random.randint(2, 5)
+                else:
+                    stock_qty = random.randint(1, 3)
+
                 self.shop_stock[name] = {
-                    "price": info["price"],
+                    "price": price,
                     "stock": stock_qty,
                     "max_stock": stock_qty,
-                    "type": info["type"],
-                    "cat": info["cat"],
+                    "type": info.get("type", "dan"),
+                    "cat": info.get("cat", "tu_vi"),
                     "desc": info["desc"]
                 }
 

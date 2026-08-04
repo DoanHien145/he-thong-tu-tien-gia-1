@@ -3,9 +3,11 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from bot.logger import logger
+from bot.config import REALMS
 from bot.commands.economy import record_activity
 
 RECIPES = {
+    # --- NHẤT PHẨM (Yêu cầu: Luyện Khí tầng 1) ---
     "Luyện Khí Đan": {
         "ingredients": {"Tam Diệp Thảo": 2},
         "success_rate": 0.85,
@@ -13,6 +15,8 @@ RECIPES = {
         "exp_loss_on_explosion": 30,
         "type": "exp",
         "effect_val": 300,
+        "min_realm_idx": 0,
+        "min_realm_name": "Luyện Khí tầng 1",
         "desc": "Linh đan Nhất Phẩm • Thành công 85% • Cắn đan +300 EXP"
     },
     "Tụ Khí Đan": {
@@ -22,43 +26,32 @@ RECIPES = {
         "exp_loss_on_explosion": 50,
         "type": "buff",
         "effect_val": 20,
+        "min_realm_idx": 0,
+        "min_realm_name": "Luyện Khí tầng 1",
         "desc": "Linh đan Nhất Phẩm • Thành công 70% • Buff +20% Đột Phá"
     },
-    "Trúc Cơ Đan": {
-        "ingredients": {"U Nhược Hoa": 2, "Xích Viêm Quả": 1},
-        "success_rate": 0.55,
-        "explosion_rate": 0.10,
-        "exp_loss_on_explosion": 100,
-        "type": "exp",
-        "effect_val": 1500,
-        "desc": "Linh đan Nhị Phẩm • Thành công 55% • Cắn đan +1500 EXP"
+    "Thanh Tâm Đan": {
+        "ingredients": {"Tam Diệp Thảo": 2, "Bích Ngọc Liên": 1},
+        "success_rate": 0.75,
+        "explosion_rate": 0.06,
+        "exp_loss_on_explosion": 40,
+        "type": "exp_buff",
+        "effect_val": 500,
+        "buff": 10,
+        "min_realm_idx": 0,
+        "min_realm_name": "Luyện Khí tầng 1",
+        "desc": "Linh đan Nhất Phẩm • Thành công 75% • Cắn đan +500 EXP & +10% Buff Đột Phá"
     },
-    "Tẩy Tủy Đan": {
-        "ingredients": {"Xích Viêm Quả": 2, "Lôi Linh Quả": 1},
-        "success_rate": 0.40,
-        "explosion_rate": 0.12,
-        "exp_loss_on_explosion": 200,
-        "type": "buff",
-        "effect_val": 35,
-        "desc": "Linh đan Nhị Phẩm (Hiếm) • Thành công 40% • Buff +35% Đột Phá"
-    },
-    "Kim Đan Bảo Đan": {
-        "ingredients": {"Lôi Linh Quả": 2, "Vạn Năm Linh Chi": 1},
-        "success_rate": 0.30,
-        "explosion_rate": 0.15,
-        "exp_loss_on_explosion": 500,
+    "Ngưng Nguyệt Đan": {
+        "ingredients": {"Bích Ngọc Liên": 2, "Cửu Diệp Nguyệt Thảo": 1},
+        "success_rate": 0.65,
+        "explosion_rate": 0.08,
+        "exp_loss_on_explosion": 60,
         "type": "exp",
-        "effect_val": 5000,
-        "desc": "Linh đan Tam Phẩm • Thành công 30% • Cắn đan +5000 EXP & Buff +50% Đột phá"
-    },
-    "Nguyên Anh Đan": {
-        "ingredients": {"Vạn Năm Linh Chi": 2, "Thiên Niên Tuyết Liên": 1},
-        "success_rate": 0.20,
-        "explosion_rate": 0.20,
-        "exp_loss_on_explosion": 1000,
-        "type": "exp",
-        "effect_val": 15000,
-        "desc": "Linh đan Tứ Phẩm (Thượng Phẩm) • Thành công 20% • Cắn đan +15,000 EXP"
+        "effect_val": 800,
+        "min_realm_idx": 0,
+        "min_realm_name": "Luyện Khí tầng 1",
+        "desc": "Linh đan Nhất Phẩm • Thành công 65% • Cắn đan +800 EXP"
     },
     "Hồi Xuân Đan": {
         "ingredients": {"Tam Diệp Thảo": 3, "U Nhược Hoa": 1},
@@ -67,7 +60,33 @@ RECIPES = {
         "exp_loss_on_explosion": 20,
         "type": "heal",
         "effect_val": 100,
+        "min_realm_idx": 0,
+        "min_realm_name": "Luyện Khí tầng 1",
         "desc": "Linh đan Phục Hồi • Hồi phục 100 HP & 100 Mana"
+    },
+
+    # --- NHỊ PHẨM (Yêu cầu: Trúc Cơ Sơ Kỳ) ---
+    "Trúc Cơ Đan": {
+        "ingredients": {"U Nhược Hoa": 2, "Xích Viêm Quả": 1},
+        "success_rate": 0.55,
+        "explosion_rate": 0.10,
+        "exp_loss_on_explosion": 100,
+        "type": "exp",
+        "effect_val": 1500,
+        "min_realm_idx": 10,
+        "min_realm_name": "Trúc Cơ Sơ Kỳ",
+        "desc": "Linh đan Nhị Phẩm • Yêu cầu Trúc Cơ • Cắn đan +1,500 EXP"
+    },
+    "Tẩy Tủy Đan": {
+        "ingredients": {"Xích Viêm Quả": 2, "Lôi Linh Quả": 1},
+        "success_rate": 0.40,
+        "explosion_rate": 0.12,
+        "exp_loss_on_explosion": 200,
+        "type": "buff",
+        "effect_val": 35,
+        "min_realm_idx": 10,
+        "min_realm_name": "Trúc Cơ Sơ Kỳ",
+        "desc": "Linh đan Nhị Phẩm • Yêu cầu Trúc Cơ • Buff +35% Đột Phá"
     },
     "Thần Hành Đan": {
         "ingredients": {"Xích Viêm Quả": 1, "Vạn Năm Linh Chi": 1},
@@ -76,19 +95,157 @@ RECIPES = {
         "exp_loss_on_explosion": 150,
         "type": "buff",
         "effect_val": 25,
-        "desc": "Linh đan Trợ Chiến • Tăng +25% né tránh tác động lôi kiếp"
+        "min_realm_idx": 10,
+        "min_realm_name": "Trúc Cơ Sơ Kỳ",
+        "desc": "Linh đan Trợ Chiến • Yêu cầu Trúc Cơ • Tăng +25% Né Lôi Kiếp & Đột Phá"
+    },
+    "Cốt Sủy Đan": {
+        "ingredients": {"Hóa Cốt Thảo": 2, "U Nhược Hoa": 2},
+        "success_rate": 0.45,
+        "explosion_rate": 0.12,
+        "exp_loss_on_explosion": 180,
+        "type": "exp_buff",
+        "effect_val": 2500,
+        "buff": 15,
+        "min_realm_idx": 10,
+        "min_realm_name": "Trúc Cơ Sơ Kỳ",
+        "desc": "Linh đan Nhị Phẩm • Yêu cầu Trúc Cơ • Cắn đan +2,500 EXP & +15% Buff Đột Phá"
+    },
+    "Tụ Linh Đan": {
+        "ingredients": {"Cửu Diệp Nguyệt Thảo": 2, "Xích Viêm Quả": 1},
+        "success_rate": 0.42,
+        "explosion_rate": 0.14,
+        "exp_loss_on_explosion": 220,
+        "type": "exp",
+        "effect_val": 4000,
+        "min_realm_idx": 10,
+        "min_realm_name": "Trúc Cơ Sơ Kỳ",
+        "desc": "Linh đan Nhị Phẩm • Yêu cầu Trúc Cơ • Cắn đan +4,000 EXP"
+    },
+
+    # --- TAM PHẨM (Yêu cầu: Kim Đan Sơ Kỳ) ---
+    "Kim Đan Bảo Đan": {
+        "ingredients": {"Lôi Linh Quả": 2, "Vạn Năm Linh Chi": 1},
+        "success_rate": 0.30,
+        "explosion_rate": 0.15,
+        "exp_loss_on_explosion": 500,
+        "type": "exp_buff",
+        "effect_val": 8000,
+        "buff": 50,
+        "min_realm_idx": 14,
+        "min_realm_name": "Kim Đan Sơ Kỳ",
+        "desc": "Linh đan Tam Phẩm • Yêu cầu Kim Đan • Cắn đan +8,000 EXP & +50% Buff Đột Phá"
+    },
+    "Ngũ Hành Linh Đan": {
+        "ingredients": {"Ngũ Hành Quả": 2, "Lôi Linh Quả": 1},
+        "success_rate": 0.28,
+        "explosion_rate": 0.16,
+        "exp_loss_on_explosion": 600,
+        "type": "exp_buff",
+        "effect_val": 12000,
+        "buff": 30,
+        "min_realm_idx": 14,
+        "min_realm_name": "Kim Đan Sơ Kỳ",
+        "desc": "Linh đan Tam Phẩm • Yêu cầu Kim Đan • Cắn đan +12,000 EXP & +30% Buff Đột Phá"
+    },
+    "Địa Mẫu Đan": {
+        "ingredients": {"Địa Mẫu Tinh Tủy": 2, "Vạn Năm Linh Chi": 1},
+        "success_rate": 0.25,
+        "explosion_rate": 0.18,
+        "exp_loss_on_explosion": 800,
+        "type": "exp",
+        "effect_val": 18000,
+        "min_realm_idx": 14,
+        "min_realm_name": "Kim Đan Sơ Kỳ",
+        "desc": "Linh đan Tam Phẩm (Hiếm) • Yêu cầu Kim Đan • Cắn đan +18,000 EXP"
+    },
+
+    # --- TỨ PHẨM (Yêu cầu: Nguyên Anh Sơ Kỳ) ---
+    "Nguyên Anh Đan": {
+        "ingredients": {"Vạn Năm Linh Chi": 2, "Thiên Niên Tuyết Liên": 1},
+        "success_rate": 0.20,
+        "explosion_rate": 0.20,
+        "exp_loss_on_explosion": 1000,
+        "type": "exp",
+        "effect_val": 35000,
+        "min_realm_idx": 18,
+        "min_realm_name": "Nguyên Anh Sơ Kỳ",
+        "desc": "Linh đan Tứ Phẩm • Yêu cầu Nguyên Anh • Cắn đan +35,000 EXP"
+    },
+    "Chân Long Đan": {
+        "ingredients": {"Long Dược Căn": 2, "Thiên Niên Tuyết Liên": 1},
+        "success_rate": 0.18,
+        "explosion_rate": 0.22,
+        "exp_loss_on_explosion": 1500,
+        "type": "exp_buff",
+        "effect_val": 50000,
+        "buff": 45,
+        "min_realm_idx": 18,
+        "min_realm_name": "Nguyên Anh Sơ Kỳ",
+        "desc": "Linh đan Tứ Phẩm • Yêu cầu Nguyên Anh • Cắn đan +50,000 EXP & +45% Buff Đột Phá"
+    },
+    "Phượng Hoàng Niết Bàn Đan": {
+        "ingredients": {"Phượng Hoàng Hoa": 2, "Long Dược Căn": 1},
+        "success_rate": 0.15,
+        "explosion_rate": 0.25,
+        "exp_loss_on_explosion": 2000,
+        "type": "exp_heal",
+        "effect_val": 75000,
+        "min_realm_idx": 18,
+        "min_realm_name": "Nguyên Anh Sơ Kỳ",
+        "desc": "Linh đan Tứ Phẩm (Thần Cấp) • Yêu cầu Nguyên Anh • Cắn đan +75,000 EXP & Hồi HP/Mana"
+    },
+
+    # --- NGŨ PHẨM (Yêu cầu: Hóa Thần Sơ Kỳ) ---
+    "Hóa Thần Đan": {
+        "ingredients": {"Hóa Thần Thảo": 2, "Thái Sơ Linh Chi": 1},
+        "success_rate": 0.12,
+        "explosion_rate": 0.28,
+        "exp_loss_on_explosion": 3000,
+        "type": "exp_buff",
+        "effect_val": 150000,
+        "buff": 60,
+        "min_realm_idx": 22,
+        "min_realm_name": "Hóa Thần Sơ Kỳ",
+        "desc": "Thượng Cổ Thần Đan (Ngũ Phẩm) • Yêu cầu Hóa Thần • Cắn đan +150,000 EXP & +60% Buff Đột Phá"
+    },
+    "Thái Sơ Hóa Đan": {
+        "ingredients": {"Thái Sơ Linh Chi": 2, "Hóa Thần Thảo": 2},
+        "success_rate": 0.08,
+        "explosion_rate": 0.35,
+        "exp_loss_on_explosion": 5000,
+        "type": "exp_buff",
+        "effect_val": 300000,
+        "buff": 75,
+        "min_realm_idx": 22,
+        "min_realm_name": "Hóa Thần Sơ Kỳ",
+        "desc": "Chí Tôn Chí Bảo (Ngũ Phẩm) • Yêu cầu Hóa Thần • Cắn đan +300,000 EXP & +75% Buff Đột Phá"
     }
 }
 
 DAN_EFFECTS = {
-    "Luyện Khí Đan": {"type": "exp", "val": 300, "desc": "Tăng +300 EXP tu vi!"},
-    "Trúc Cơ Đan": {"type": "exp", "val": 1500, "desc": "Tăng +1500 EXP tu vi!"},
-    "Kim Đan Bảo Đan": {"type": "exp_buff", "val": 5000, "buff": 50, "desc": "Tăng +5000 EXP & +50% Buff Đột Phá!"},
-    "Nguyên Anh Đan": {"type": "exp", "val": 15000, "desc": "Tăng +15,000 EXP tu vi vĩ đại!"},
-    "Tụ Khí Đan": {"type": "buff", "val": 20, "desc": "Gia tăng +20% tỉ lệ thành công cho lần Đột Phá tiếp theo!"},
-    "Tẩy Tủy Đan": {"type": "buff", "val": 35, "desc": "Gia tăng +35% tỉ lệ thành công cho lần Đột Phá tiếp theo!"},
-    "Thần Hành Đan": {"type": "buff", "val": 25, "desc": "Gia tăng +25% Tỉ lệ Đột Phá chấn áp Tâm Ma!"},
-    "Hồi Xuân Đan": {"type": "heal", "val": 100, "desc": "Phục hồi 100 HP & 100 Mana lập tức!"}
+    "Luyện Khí Đan": {"type": "exp", "val": 300, "min_realm_idx": 0, "min_realm_name": "Luyện Khí tầng 1", "backfire_exp": 150, "desc": "Tăng +300 EXP tu vi!"},
+    "Tụ Khí Đan": {"type": "buff", "val": 20, "min_realm_idx": 0, "min_realm_name": "Luyện Khí tầng 1", "backfire_exp": 100, "desc": "Gia tăng +20% tỷ lệ thành công cho lần Đột Phá tiếp theo!"},
+    "Thanh Tâm Đan": {"type": "exp_buff", "val": 500, "buff": 10, "min_realm_idx": 0, "min_realm_name": "Luyện Khí tầng 1", "backfire_exp": 200, "desc": "Tăng +500 EXP & +10% Buff Đột Phá!"},
+    "Ngưng Nguyệt Đan": {"type": "exp", "val": 800, "min_realm_idx": 0, "min_realm_name": "Luyện Khí tầng 1", "backfire_exp": 300, "desc": "Tăng +800 EXP tu vi!"},
+    "Hồi Xuân Đan": {"type": "heal", "val": 100, "min_realm_idx": 0, "min_realm_name": "Luyện Khí tầng 1", "backfire_exp": 100, "desc": "Phục hồi 100 HP & 100 Mana lập tức!"},
+
+    "Trúc Cơ Đan": {"type": "exp", "val": 1500, "min_realm_idx": 10, "min_realm_name": "Trúc Cơ Sơ Kỳ", "backfire_exp": 800, "desc": "Tăng +1500 EXP tu vi!"},
+    "Tẩy Tủy Đan": {"type": "buff", "val": 35, "min_realm_idx": 10, "min_realm_name": "Trúc Cơ Sơ Kỳ", "backfire_exp": 600, "desc": "Gia tăng +35% tỷ lệ thành công cho lần Đột Phá tiếp theo!"},
+    "Thần Hành Đan": {"type": "buff", "val": 25, "min_realm_idx": 10, "min_realm_name": "Trúc Cơ Sơ Kỳ", "backfire_exp": 500, "desc": "Gia tăng +25% Tỉ lệ Đột Phá chấn áp Tâm Ma!"},
+    "Cốt Sủy Đan": {"type": "exp_buff", "val": 2500, "buff": 15, "min_realm_idx": 10, "min_realm_name": "Trúc Cơ Sơ Kỳ", "backfire_exp": 1000, "desc": "Tăng +2500 EXP & +15% Buff Đột Phá!"},
+    "Tụ Linh Đan": {"type": "exp", "val": 4000, "min_realm_idx": 10, "min_realm_name": "Trúc Cơ Sơ Kỳ", "backfire_exp": 1500, "desc": "Tăng +4000 EXP tu vi!"},
+
+    "Kim Đan Bảo Đan": {"type": "exp_buff", "val": 8000, "buff": 50, "min_realm_idx": 14, "min_realm_name": "Kim Đan Sơ Kỳ", "backfire_exp": 3500, "desc": "Tăng +8000 EXP & +50% Buff Đột Phá!"},
+    "Ngũ Hành Linh Đan": {"type": "exp_buff", "val": 12000, "buff": 30, "min_realm_idx": 14, "min_realm_name": "Kim Đan Sơ Kỳ", "backfire_exp": 5000, "desc": "Tăng +12000 EXP & +30% Buff Đột Phá!"},
+    "Địa Mẫu Đan": {"type": "exp", "val": 18000, "min_realm_idx": 14, "min_realm_name": "Kim Đan Sơ Kỳ", "backfire_exp": 7000, "desc": "Tăng +18000 EXP tu vi!"},
+
+    "Nguyên Anh Đan": {"type": "exp", "val": 35000, "min_realm_idx": 18, "min_realm_name": "Nguyên Anh Sơ Kỳ", "backfire_exp": 15000, "desc": "Tăng +35,000 EXP tu vi vĩ đại!"},
+    "Chân Long Đan": {"type": "exp_buff", "val": 50000, "buff": 45, "min_realm_idx": 18, "min_realm_name": "Nguyên Anh Sơ Kỳ", "backfire_exp": 20000, "desc": "Tăng +50,000 EXP & +45% Buff Đột Phá!"},
+    "Phượng Hoàng Niết Bàn Đan": {"type": "exp_heal", "val": 75000, "min_realm_idx": 18, "min_realm_name": "Nguyên Anh Sơ Kỳ", "backfire_exp": 30000, "desc": "Tăng +75,000 EXP & Hồi HP/Mana đầy tràn!"},
+
+    "Hóa Thần Đan": {"type": "exp_buff", "val": 150000, "buff": 60, "min_realm_idx": 22, "min_realm_name": "Hóa Thần Sơ Kỳ", "backfire_exp": 60000, "desc": "Tăng +150,000 EXP & +60% Buff Đột Phá!"},
+    "Thái Sơ Hóa Đan": {"type": "exp_buff", "val": 300000, "buff": 75, "min_realm_idx": 22, "min_realm_name": "Hóa Thần Sơ Kỳ", "backfire_exp": 120000, "desc": "Tăng +300,000 EXP & +75% Buff Đột Phá!"}
 }
 
 class AlchemyCog(commands.Cog):
@@ -171,9 +328,10 @@ class AlchemyCog(commands.Cog):
             )
             for dan_name, recipe in RECIPES.items():
                 ing_str = ", ".join([f"`{count}x {ing}`" for ing, count in recipe["ingredients"].items()])
+                req_realm = recipe.get("min_realm_name", "Luyện Khí tầng 1")
                 embed.add_field(
                     name=f"🧪 {dan_name} (Tỉ lệ thành công: {int(recipe['success_rate']*100)}%)",
-                    value=f"└ 🌿 Nguyên liệu: {ing_str}\n└ ✨ Tác dụng: {recipe['desc']}",
+                    value=f"└ 🌿 Nguyên liệu: {ing_str}\n└ ☯ Cảnh giới dùng: **{req_realm}**\n└ ✨ Tác dụng: {recipe['desc']}",
                     inline=False
                 )
             await interaction.response.send_message(embed=embed)
@@ -283,13 +441,54 @@ class AlchemyCog(commands.Cog):
             )
             return
 
-        success, msg = await self.bot.excel_manager.use_item(discord_id, matched_dan, 1)
-        if not success:
-            await interaction.response.send_message(f"❌ {msg}", ephemeral=True)
+        # Check if player has the pill in inventory
+        inventory = await self.bot.excel_manager.get_inventory(discord_id)
+        if inventory.get(matched_dan, 0) <= 0:
+            await interaction.response.send_message(
+                f"❌ Bạn không có linh đan **{matched_dan}** trong Túi Đồ! Hãy dùng `/che_dan` hoặc `/shop` để sở hữu.",
+                ephemeral=True
+            )
             return
 
         effect = DAN_EFFECTS[matched_dan]
         player = await self.bot.excel_manager.get_player(discord_id)
+        current_realm = player.get("Cảnh giới", "Luyện Khí tầng 1")
+
+        # Determine realm index
+        player_realm_idx = next((i for i, r in enumerate(REALMS) if r["name"] == current_realm), 0)
+        min_realm_idx = effect.get("min_realm_idx", 0)
+        min_realm_name = effect.get("min_realm_name", "Luyện Khí tầng 1")
+
+        # Level check: If user realm is too low, trigger BACKFIRE!
+        if player_realm_idx < min_realm_idx:
+            # Deduct the pill (it was consumed)
+            await self.bot.excel_manager.use_item(discord_id, matched_dan, 1)
+
+            backfire_exp = effect.get("backfire_exp", 500)
+            current_exp = int(player.get("EXP", 0))
+            new_exp = max(0, current_exp - backfire_exp)
+            await self.bot.excel_manager.update_player(discord_id, {"EXP": new_exp})
+            updated_player = await self.bot.excel_manager.get_player(discord_id)
+
+            embed = discord.Embed(
+                title="💥 DƯỢC LỰC BỘC PHÁT — BỊ PHẢN PHỆ TỔN THƯƠNG KINHMẠCH!",
+                description=(
+                    f"😱 Cảnh giới của **{player.get('Tên')}** hiện tại mới là **{current_realm}**, "
+                    f"không thể gánh vác dược lực cuồng bạo của **{matched_dan}** (Cảnh giới yêu cầu: **{min_realm_name}**)!\n\n"
+                    f"☠️ Cố chấp nuốt thần đan vượt cấp khiến cuồng phong linh khí xé rách kinh mạch!\n"
+                    f"💔 Bị phản phệ sụt giảm ngay **-{backfire_exp} EXP** tu vi!\n"
+                    f"📊 EXP Tu Vi còn lại: `{updated_player.get('EXP')}` EXP"
+                ),
+                color=discord.Color.dark_red()
+            )
+            await interaction.response.send_message(embed=embed)
+            return
+
+        # Normal usage when realm condition is met
+        success, msg = await self.bot.excel_manager.use_item(discord_id, matched_dan, 1)
+        if not success:
+            await interaction.response.send_message(f"❌ {msg}", ephemeral=True)
+            return
 
         if effect["type"] == "exp":
             await self.bot.excel_manager.add_exp(discord_id, effect["val"])
@@ -318,6 +517,20 @@ class AlchemyCog(commands.Cog):
                     f"📊 Tổng EXP: `{updated_player.get('EXP')}` EXP"
                 ),
                 color=discord.Color.gold()
+            )
+        elif effect["type"] == "exp_heal":
+            await self.bot.excel_manager.add_exp(discord_id, effect["val"])
+            await self.bot.excel_manager.update_player(discord_id, {"HP": 100, "Mana": 100})
+            updated_player = await self.bot.excel_manager.get_player(discord_id)
+            embed = discord.Embed(
+                title="🔥 CẮN THẦN ĐAN NIẾT BÀN!",
+                description=(
+                    f"**{player.get('Tên')}** nuốt vào **{matched_dan}**, phượng hoàng thần hỏa tẩy lễ toàn thân!\n\n"
+                    f"✨ Nhận ngay: `+{effect['val']}` EXP Tu Vi!\n"
+                    f"💚 Sinh lực HP & Mana hồi phục **100%** tràn đầy!\n"
+                    f"📊 Tổng EXP: `{updated_player.get('EXP')}` EXP"
+                ),
+                color=discord.Color.purple()
             )
         elif effect["type"] == "heal":
             await self.bot.excel_manager.update_player(discord_id, {"HP": 100, "Mana": 100})
