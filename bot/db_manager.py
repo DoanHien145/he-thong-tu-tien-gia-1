@@ -25,15 +25,40 @@ class DatabaseManager:
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
         self._init_db()
 
+    def _reset_corrupt_db(self):
+        logger.warning(f"Database {self.db_path} bị hỏng (malformed). Đang tái tạo lại file database...")
+        for ext in ["", "-wal", "-shm", "-journal"]:
+            f = self.db_path + ext
+            if os.path.exists(f):
+                try:
+                    os.remove(f)
+                except Exception as e:
+                    logger.error(f"Lỗi khi xóa file db {f}: {e}")
+
     def _get_connection(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        return conn
+        try:
+            conn = sqlite3.connect(self.db_path)
+            conn.row_factory = sqlite3.Row
+            conn.execute("PRAGMA quick_check;")
+            return conn
+        except (sqlite3.DatabaseError, sqlite3.OperationalError) as e:
+            if "malformed" in str(e).lower() or "disk image" in str(e).lower():
+                self._reset_corrupt_db()
+                conn = sqlite3.connect(self.db_path)
+                conn.row_factory = sqlite3.Row
+                return conn
+            raise e
 
     def _init_db(self):
         """Initializes tables and indexes if not existing."""
-        conn = self._get_connection()
-        cursor = conn.cursor()
+        try:
+            conn = self._get_connection()
+            cursor = conn.cursor()
+        except Exception as e:
+            logger.error(f"Lỗi khởi tạo DB connection: {e}. Đang reset DB...")
+            self._reset_corrupt_db()
+            conn = self._get_connection()
+            cursor = conn.cursor()
 
         # Players table
         cursor.execute("""

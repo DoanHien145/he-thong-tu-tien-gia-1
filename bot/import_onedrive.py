@@ -71,7 +71,24 @@ def download_and_import_onedrive(
         raise e
 
     # Step 3: Parse XLSX sheets with openxml cell coordinates
-    conn = sqlite3.connect(db_file)
+    try:
+        conn = sqlite3.connect(db_file)
+        conn.execute("PRAGMA quick_check;")
+    except (sqlite3.DatabaseError, sqlite3.OperationalError) as e:
+        logger.warning(f"Database {db_file} bị hỏng ({e}). Đang tái tạo lại file database mới...")
+        try:
+            conn.close()
+        except Exception:
+            pass
+        for ext in ["", "-wal", "-shm", "-journal"]:
+            f = db_file + ext
+            if os.path.exists(f):
+                try:
+                    os.remove(f)
+                except Exception as rem_err:
+                    logger.error(f"Lỗi khi xóa file db {f}: {rem_err}")
+        conn = sqlite3.connect(db_file)
+
     cursor = conn.cursor()
 
     # Ensure database schema exists
