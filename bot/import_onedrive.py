@@ -9,7 +9,7 @@ import re
 from datetime import datetime
 from bot.logger import logger
 
-DEFAULT_ONEDRIVE_URL = "https://excel.cloud.microsoft/open/onedrive/?docId=1DFAC0546FE61B6E%21s95c61b3d06e24709b6e9b71cc4f9e163&driveId=1DFAC0546FE61B6E"
+DEFAULT_ONEDRIVE_URL = "https://excel.cloud.microsoft/open/onedrive/?docId=1DFAC0546FE61B6E%21s6246c65203524b4cb0a7e680ec5ac5ff&driveId=1DFAC0546FE61B6E"
 
 def col_to_idx(col_str: str) -> int:
     idx = 0
