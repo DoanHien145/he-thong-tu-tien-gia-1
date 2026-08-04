@@ -106,6 +106,7 @@ class EventsCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.diet_quai_cooldowns: dict[str, float] = {}
+        self.thu_trieu_cooldowns: dict[str, float] = {}
         self.auto_events_loop.start()
 
     def cog_unload(self):
@@ -238,7 +239,9 @@ class EventsCog(commands.Cog):
 
         ACTIVE_CHANNEL_EVENT["participants"].add(discord_id)
         username = interaction.user.display_name
-        record_activity(discord_id, "thamgia")
+        record_activity(discord_id, "thamgia", self.bot)
+        record_activity(discord_id, "sukien", self.bot)
+        record_activity(discord_id, "su_kien", self.bot)
 
         await self.bot.excel_manager.get_or_create_player(discord_id, username)
         exp = ACTIVE_CHANNEL_EVENT["rewards"].get("exp", 300)
@@ -365,7 +368,7 @@ class EventsCog(commands.Cog):
         )
         await interaction.response.send_message(embed=embed)
 
-    @app_commands.command(name="danh_thu_trieu", description="Tham gia chống trả đợt Thú Triều bộc phát bảo vệ Sơn Môn")
+    @app_commands.command(name="danh_thu_trieu", description="Tham gia chống trả đợt Thú Triều bộc phát bảo vệ Sơn Môn (Cooldown 10 phút)")
     async def danh_thu_trieu(self, interaction: discord.Interaction):
         if self.bot.channel_id and interaction.channel_id != self.bot.channel_id:
             await interaction.response.send_message("❌ Lệnh này chỉ hoạt động trong kênh tông môn quy định!", ephemeral=True)
@@ -373,6 +376,19 @@ class EventsCog(commands.Cog):
 
         discord_id = str(interaction.user.id)
         username = interaction.user.display_name
+
+        now = time.time()
+        last = self.thu_trieu_cooldowns.get(discord_id, 0)
+        cooldown_time = 600  # 10 minutes (600s)
+        if now - last < cooldown_time:
+            remaining = int((cooldown_time - (now - last)) / 60)
+            await interaction.response.send_message(
+                f"⏳ **{username}** vừa tham gia chống trả Thú Triều gần đây! Vui lòng tĩnh dưỡng **{max(1, remaining)} phút** nữa.",
+                ephemeral=True
+            )
+            return
+
+        self.thu_trieu_cooldowns[discord_id] = now
         record_activity(discord_id, "sukien", self.bot)
         record_activity(discord_id, "su_kien", self.bot)
         record_activity(discord_id, "danh_thu_trieu", self.bot)
