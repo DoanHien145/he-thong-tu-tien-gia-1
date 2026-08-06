@@ -89,7 +89,7 @@ class AdminCog(commands.Cog):
         target_name = user.display_name
 
         player = await self.bot.excel_manager.get_or_create_player(target_id, target_name)
-        updated, _ = await self.bot.excel_manager.add_linh_thach(target_id, amount)
+        updated = await self.bot.excel_manager.add_linh_thach(target_id, amount)
         await self.bot.excel_manager.save()
 
         embed = discord.Embed(
@@ -164,7 +164,7 @@ class AdminCog(commands.Cog):
             await interaction.response.send_message(embed=embed)
 
         elif loai == "linh_thach":
-            updated, _ = await self.bot.excel_manager.add_linh_thach(target_id, so_luong)
+            updated = await self.bot.excel_manager.add_linh_thach(target_id, so_luong)
             await self.bot.excel_manager.save()
             embed = discord.Embed(
                 title="🎁 BAN PHÁT LINH THẠCH (OWNER GIVE)",
@@ -282,14 +282,23 @@ class AdminCog(commands.Cog):
         await interaction.followup.send(embed=embed, files=files_to_send, ephemeral=True)
         logger.info(f"Command Executed: /tai_data by {interaction.user.display_name}")
 
-    @app_commands.command(name="cap_nhat_onedrive", description="[Admin] Tự động tải và đồng bộ dữ liệu mới nhất từ OneDrive về SQLite")
+    @app_commands.command(name="cap_nhat_onedrive", description="[Admin/Owner] Tự động tải và đồng bộ dữ liệu mới nhất từ OneDrive về SQLite")
+    @app_commands.describe(link_onedrive="Link chia sẻ OneDrive (Tùy chọn, nếu không nhập sẽ dùng link mặc định)")
     @app_commands.checks.has_permissions(administrator=True)
-    async def cap_nhat_onedrive(self, interaction: discord.Interaction):
+    async def cap_nhat_onedrive(
+        self,
+        interaction: discord.Interaction,
+        link_onedrive: str = None
+    ):
         await interaction.response.defer(ephemeral=True)
         try:
             from bot.import_onedrive import download_and_import_onedrive
             import asyncio
-            players_count, items_count = await asyncio.to_thread(download_and_import_onedrive)
+            url_to_use = link_onedrive.strip() if link_onedrive else None
+            players_count, items_count = await asyncio.to_thread(download_and_import_onedrive, url_to_use) if url_to_use else await asyncio.to_thread(download_and_import_onedrive)
+
+            # Reload database and save to Excel
+            await self.bot.excel_manager.save()
 
             embed = discord.Embed(
                 title="🔄 CẬP NHẬT DỮ LIỆU ONEDRIVE THÀNH CÔNG!",

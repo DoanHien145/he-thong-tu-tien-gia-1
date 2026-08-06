@@ -57,33 +57,35 @@ def download_and_import_onedrive(
     try:
         candidates = []
 
-        # Mở onedrive_url trước tiên
-        if onedrive_url:
+        # 1. Luôn luôn mở public share link mặc định trước để nhận cookies redeem hợp lệ từ OneDrive
+        public_share_url = DEFAULT_ONEDRIVE_URL
+        try:
+            resp_public = opener.open(public_share_url)
+            html_public = resp_public.read().decode('utf-8', errors='ignore')
+            for raw in [public_share_url, resp_public.geturl(), html_public]:
+                doc_id = parse_doc_id_from_url(raw)
+                if doc_id and doc_id not in candidates:
+                    candidates.append(doc_id)
+        except Exception as pub_err:
+            logger.warning(f"Lỗi mở public share url: {pub_err}")
+
+        # 2. Nếu người dùng truyền onedrive_url riêng, bóc tách doc_id từ url đó
+        if onedrive_url and onedrive_url != public_share_url:
+            doc_id_user = parse_doc_id_from_url(onedrive_url)
+            if doc_id_user and doc_id_user not in candidates:
+                candidates.insert(0, doc_id_user)
             try:
-                resp = opener.open(onedrive_url)
-                final_url = resp.geturl()
-                html = resp.read().decode('utf-8', errors='ignore')
-                for raw in [onedrive_url, final_url, html]:
+                resp_user = opener.open(onedrive_url)
+                final_url_user = resp_user.geturl()
+                html_user = resp_user.read().decode('utf-8', errors='ignore')
+                for raw in [onedrive_url, final_url_user, html_user]:
                     doc_id = parse_doc_id_from_url(raw)
                     if doc_id and doc_id not in candidates:
-                        candidates.append(doc_id)
+                        candidates.insert(0, doc_id)
             except Exception as url_err:
                 logger.warning(f"Không thể mở trực tiếp onedrive_url ({onedrive_url}): {url_err}")
 
-        # Nếu chưa tìm được candidate, thử mở public share link mặc định
-        if not candidates:
-            public_share_url = "https://1drv.ms/x/c/1dfac0546fe61b6e/IQDl2zLvI2srQr1Y4Br_bbl2AcErRAiANMQdG-w-nsRF9SM?e=td3Kdb"
-            try:
-                resp_public = opener.open(public_share_url)
-                html_public = resp_public.read().decode('utf-8', errors='ignore')
-                for raw in [public_share_url, resp_public.geturl(), html_public]:
-                    doc_id = parse_doc_id_from_url(raw)
-                    if doc_id and doc_id not in candidates:
-                        candidates.append(doc_id)
-            except Exception as pub_err:
-                logger.warning(f"Lỗi mở public share url: {pub_err}")
-
-        # Thêm các document ID mặc định đã kiểm chứng nếu chưa có
+        # 3. Thêm các document ID mặc định đã kiểm chứng nếu chưa có
         known_ids = [
             "ef32dbe5-6b23-422b-bd58-e01aff6db976",
             "fe568fbd-3b6e-4f7d-a9b0-126de52d5b0d"
