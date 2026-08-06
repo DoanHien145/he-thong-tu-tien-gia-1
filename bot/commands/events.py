@@ -7,6 +7,15 @@ from discord.ext import commands, tasks
 from bot.logger import logger
 from bot.commands.economy import record_activity
 
+async def check_is_owner_or_admin(interaction: discord.Interaction) -> bool:
+    if await interaction.client.is_owner(interaction.user):
+        return True
+    if interaction.guild and interaction.user.id == interaction.guild.owner_id:
+        return True
+    if isinstance(interaction.user, discord.Member) and interaction.user.guild_permissions.administrator:
+        return True
+    return False
+
 # Active global active channel event state
 ACTIVE_CHANNEL_EVENT = {
     "active": False,
@@ -49,6 +58,7 @@ class GroupEventView(discord.ui.View):
         await self.bot.excel_manager.add_exp(discord_id, exp)
         await self.bot.excel_manager.add_linh_thach(discord_id, lt)
         await self.bot.excel_manager.add_item(discord_id, item, 1)
+        await self.bot.excel_manager.save()
 
         await interaction.response.send_message(
             f"🎉 **{username}** tiến vào sự kiện **{ACTIVE_CHANNEL_EVENT['title']}**!\n"
@@ -88,6 +98,7 @@ class SingleClaimView(discord.ui.View):
         await self.bot.excel_manager.add_exp(discord_id, exp)
         await self.bot.excel_manager.add_linh_thach(discord_id, lt)
         await self.bot.excel_manager.add_item(discord_id, item, 1)
+        await self.bot.excel_manager.save()
 
         embed = discord.Embed(
             title="✨ CƠ DUYÊN ĐÃ CÓ CHỦ!",
@@ -251,6 +262,7 @@ class EventsCog(commands.Cog):
         await self.bot.excel_manager.add_exp(discord_id, exp)
         await self.bot.excel_manager.add_linh_thach(discord_id, lt)
         await self.bot.excel_manager.add_item(discord_id, item, 1)
+        await self.bot.excel_manager.save()
 
         embed = discord.Embed(
             title="✨ THAM GIA SỰ KIỆN THÀNH CÔNG!",
@@ -285,6 +297,7 @@ class EventsCog(commands.Cog):
         await self.bot.excel_manager.add_exp(discord_id, exp)
         await self.bot.excel_manager.add_linh_thach(discord_id, lt)
         await self.bot.excel_manager.add_item(discord_id, item, 1)
+        await self.bot.excel_manager.save()
 
         embed = discord.Embed(
             title="🎁 CẮO ĐƯỢC CƠ DUYÊN NGẪU NHIÊN!",
@@ -354,6 +367,7 @@ class EventsCog(commands.Cog):
         await self.bot.excel_manager.add_exp(discord_id, monster["exp"])
         await self.bot.excel_manager.add_linh_thach(discord_id, monster["lt"])
         await self.bot.excel_manager.add_item(discord_id, monster["item"], 1)
+        await self.bot.excel_manager.save()
 
         embed = discord.Embed(
             title=f"⚔️ DIỆT QUÁI THÀNH CÔNG: {monster['name']}",
@@ -401,6 +415,7 @@ class EventsCog(commands.Cog):
         await self.bot.excel_manager.add_exp(discord_id, exp)
         await self.bot.excel_manager.add_linh_thach(discord_id, lt)
         await self.bot.excel_manager.add_item(discord_id, item, 1)
+        await self.bot.excel_manager.save()
 
         embed = discord.Embed(
             title="🐾 CHỐNG TRẢ THÚ TRIỀU THÀNH CÔNG!",
@@ -414,6 +429,143 @@ class EventsCog(commands.Cog):
             color=discord.Color.gold()
         )
         await interaction.response.send_message(embed=embed)
+
+    @app_commands.command(name="summon_sukien", description="[Owner/Admin] Kích hoạt/Triệu hồi ngay sự kiện Biến Cố hoặc Cơ Duyên cho Tông Môn")
+    @app_commands.describe(
+        loai_su_kien="Loại sự kiện muốn triệu hồi",
+        ten_custom="Tên sự kiện tùy chỉnh (Tùy chọn)"
+    )
+    @app_commands.choices(loai_su_kien=[
+        app_commands.Choice(name="⛩️ Biến Cố Nhóm (Toàn thể tu sĩ tham gia)", value="nhom"),
+        app_commands.Choice(name="⚡ Cơ Duyên Đơn Lẻ (Chỉ 1 người nhanh tay nhất)", value="don"),
+        app_commands.Choice(name="🎲 Ngẫu Nhiên", value="random")
+    ])
+    async def summon_sukien(
+        self,
+        interaction: discord.Interaction,
+        loai_su_kien: str = "random",
+        ten_custom: str = None
+    ):
+        if not await check_is_owner_or_admin(interaction):
+            await interaction.response.send_message("❌ Ngươi không có quyền Chưởng Môn / Owner để triệu hồi sự kiện!", ephemeral=True)
+            return
+
+        if self.bot.channel_id and interaction.channel_id != self.bot.channel_id:
+            await interaction.response.send_message("❌ Lệnh này chỉ hoạt động trong kênh tông môn quy định!", ephemeral=True)
+            return
+
+        target_channel = interaction.channel
+        if self.bot.channel_id:
+            ch = self.bot.get_channel(self.bot.channel_id)
+            if ch:
+                target_channel = ch
+
+        if loai_su_kien == "random":
+            is_single = random.random() < 0.40
+        else:
+            is_single = (loai_su_kien == "don")
+
+        if is_single:
+            opportunities = [
+                {
+                    "title": "🎁 Túi Trữ Đồ Vô Chủ Giáng Lâm",
+                    "desc": "Bên bờ suối tiên tỏa ánh kim quang, một chiếc túi trữ đồ của cao nhân ngàn năm lộ ra!",
+                    "exp": 1200, "lt": 1500, "item": "Xích Viêm Quả"
+                },
+                {
+                    "title": "🌟 Linh Quả Mẫu Cửu Hoàn Khai Hoa",
+                    "desc": "Trên đỉnh vách đá sương mù, một quả linh quả thượng phẩm vừa kết trái rực rỡ!",
+                    "exp": 1800, "lt": 2000, "item": "Lôi Linh Quả"
+                },
+                {
+                    "title": "📜 Tàn Sách Tiên Bút Xuất Hiện",
+                    "desc": "Một vệt linh quang mang theo cuốn bí tịch cổ xưa rơi xuống giữa sân tông môn!",
+                    "exp": 2500, "lt": 3000, "item": "Vạn Năm Linh Chi"
+                },
+                {
+                    "title": "💎 Mạch Linh Thạch Thượng Phẩm Lộ Ra",
+                    "desc": "Một vệt linh thạch phát sáng rực rỡ dưới lòng suối, chỉ 1 người duy nhất thu hoạch được!",
+                    "exp": 1500, "lt": 4000, "item": "Thiên Niên Tuyết Liên"
+                }
+            ]
+            opp = random.choice(opportunities)
+            title = ten_custom if ten_custom else opp["title"]
+
+            ACTIVE_CHANNEL_EVENT["active"] = True
+            ACTIVE_CHANNEL_EVENT["title"] = title
+            ACTIVE_CHANNEL_EVENT["desc"] = opp["desc"]
+            ACTIVE_CHANNEL_EVENT["type"] = "single"
+            ACTIVE_CHANNEL_EVENT["claimed_by"] = None
+            ACTIVE_CHANNEL_EVENT["rewards"] = {"exp": opp["exp"], "lt": opp["lt"], "item": opp["item"]}
+
+            view = SingleClaimView(self.bot)
+
+            embed = discord.Embed(
+                title=f"⚡ CƠ DUYÊN GIÁNG LÂM (OWNER SUMMON): {title}",
+                description=(
+                    f"📜 *Chưởng môn / Owner **{interaction.user.display_name}** thi triển đại thần thông triệu hồi Cơ Duyên!*\n"
+                    f"💬 *{opp['desc']}*\n\n"
+                    f"⚠️ **ĐẶC BIỆT**: CHỈ **1 TU SĨ NHANH TAY NHẤT** MỚI NHẬN ĐƯỢC CƠ DUYÊN NÀY!\n"
+                    f"👉 Nhấn nút bên dưới hoặc gõ `/nhan_co_duyen`!"
+                ),
+                color=discord.Color.gold()
+            )
+            await target_channel.send(embed=embed, view=view)
+            await interaction.response.send_message(f"✅ **Chưởng môn** đã triệu hồi thành công Cơ Duyên đơn lẻ **{title}**!", ephemeral=True)
+            logger.info(f"Owner {interaction.user.display_name} summoned Single Event: {title}")
+
+        else:
+            group_events = [
+                {
+                    "title": "🐾 THÚ TRIỀU BỘC PHÁT TRÀN SƠN MÔN!",
+                    "desc": "Hàng ngàn hung thú từ Vạn Yêu Cốc cuồng bạo tràn xuống Sơn Môn! Triệu tập chư vị tu sĩ hợp lực chống trả Thú Triều!",
+                    "exp": 3000, "lt": 2000, "item": "Vạn Năm Linh Chi"
+                },
+                {
+                    "title": "🌌 Dị Tượng Mở Không Gian!",
+                    "desc": "Một vết nứt không gian mở ra giữa bầu trời tông môn! Linh khí cuồn cuộn đổ xuống. Chư vị đồng đạo ai muốn tiến vào?",
+                    "exp": 1500, "lt": 1200, "item": "Tam Diệp Thảo"
+                },
+                {
+                    "title": "🐲 Long Mạch Thức Tỉnh!",
+                    "desc": "Thái cổ long mạch dưới sơn môn rung chuyển, bộc phát linh khí dạt dào!",
+                    "exp": 2000, "lt": 1500, "item": "U Nhược Hoa"
+                },
+                {
+                    "title": "🏆 Cổ Trận Linh Khí Giáng Lâm!",
+                    "desc": "Trận pháp thượng cổ tự động vận hành, mở ra cơ hội hấp thu linh khí cho chư vị tu sĩ!",
+                    "exp": 2500, "lt": 1800, "item": "Xích Viêm Quả"
+                },
+                {
+                    "title": "📜 Tiên Ngự Di Bảo Xuất Hiện!",
+                    "desc": "Di tích tiên nhân tỏa tiên quang chiếu sáng cả bầu trời tông môn!",
+                    "exp": 3500, "lt": 2500, "item": "Lôi Linh Quả"
+                }
+            ]
+            ge = random.choice(group_events)
+            title = ten_custom if ten_custom else ge["title"]
+
+            ACTIVE_CHANNEL_EVENT["active"] = True
+            ACTIVE_CHANNEL_EVENT["title"] = title
+            ACTIVE_CHANNEL_EVENT["desc"] = ge["desc"]
+            ACTIVE_CHANNEL_EVENT["type"] = "group"
+            ACTIVE_CHANNEL_EVENT["participants"] = set()
+            ACTIVE_CHANNEL_EVENT["rewards"] = {"exp": ge["exp"], "lt": ge["lt"], "item": ge["item"]}
+
+            view = GroupEventView(self.bot)
+
+            embed = discord.Embed(
+                title=f"⛩️ BIẾN CỐ TÔNG MÔN (OWNER SUMMON): {title}",
+                description=(
+                    f"📜 *Chưởng môn / Owner **{interaction.user.display_name}** đã mở đại sự kiện Tông Môn!*\n"
+                    f"💬 *{ge['desc']}*\n\n"
+                    f"✨ **Tất cả các tu sĩ** nhấn nút bên dưới hoặc gõ `/thamgia` trong vòng **2 phút** để nhận cơ duyên!"
+                ),
+                color=discord.Color.purple()
+            )
+            await target_channel.send(embed=embed, view=view)
+            await interaction.response.send_message(f"✅ **Chưởng môn** đã triệu hồi thành công Biến Cố Nhóm **{title}**!", ephemeral=True)
+            logger.info(f"Owner {interaction.user.display_name} summoned Group Event: {title}")
 
 async def setup(bot):
     await bot.add_cog(EventsCog(bot))

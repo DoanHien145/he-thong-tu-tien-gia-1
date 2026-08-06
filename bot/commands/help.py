@@ -27,9 +27,14 @@ COMMAND_EMOJIS = {
     "dung_dan": "💊",
     "cong_exp": "🛠️",
     "cong_linh_thach": "🛠️",
+    "give_exp": "🎁",
+    "give_linh_thach": "💎",
+    "give": "🎁",
     "set_canh_gioi": "🛠️",
     "tai_data": "📦",
     "cap_nhat_onedrive": "🔄",
+    "gift": "🎁",
+    "summon_sukien": "⚡",
     "help": "📖"
 }
 
@@ -94,7 +99,7 @@ class HelpCog(commands.Cog):
                 ("🎁 /diem_danh", "Điểm danh hằng ngày nhận 150 Linh Thạch & Dược Liệu."),
                 ("👹 /boss", "Xem thông tin Thượng Cổ Thiên Ma Boss & BXH sát thương."),
                 ("⚔️ /tancong", "Tấn công Boss Thế Giới để tích lũy sát thương & linh thạch."),
-                ("🏪 /shop", "Xem Bảo Các Tông Môn (Reset kho ngẫu nhiên mỗi 5p)."),
+                ("🏪 /shop", "Xem Bảo Các Tông Môn & nút Mua Hết Đan / Dược Liệu."),
                 ("🛒 /mua", "Mua Linh Đan hoặc Nguyên Liệu từ Bảo Các."),
                 ("📜 /nhiemvu", "Bảng Nhiệm Vụ Hoạt Động Tông Môn."),
                 ("🌌 /thamgia", "Tham gia sự kiện nhóm đang diễn ra."),
@@ -104,6 +109,8 @@ class HelpCog(commands.Cog):
                 ("💊 /dung_dan", "Cắn Linh Đan tăng Tu Vi / Buff Đột Phá / Hồi HP."),
                 ("🏆 /top", "Xem bảng xếp hạng tu sĩ mạnh nhất."),
                 ("💰 /linhthach", "Xem số Linh Thạch hiện có."),
+                ("🎁 /gift", "[Admin/Owner] Ban phát vật phẩm với số lượng cho đệ tử."),
+                ("⚡ /summon_sukien", "[Admin/Owner] Kích hoạt/Triệu hồi ngay sự kiện Tông Môn."),
                 ("📦 /tai_data", "[Admin/Owner] Tải file dữ liệu SQLite (cultivation.db) & Excel."),
                 ("📖 /help", "Hiển thị bí kíp danh sách các lệnh Tông Môn.")
             ]

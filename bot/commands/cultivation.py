@@ -42,6 +42,7 @@ class SongTuView(discord.ui.View):
         # Update partner links
         await self.bot.excel_manager.update_player(req_id, {"Song tu partner": self.target.display_name})
         await self.bot.excel_manager.update_player(target_id, {"Song tu partner": self.requester.display_name})
+        await self.bot.excel_manager.save()
 
         embed = discord.Embed(
             title="💞 SONG TU HOÀN THÀNH — ĐẠI ĐẠO CÙNG TIẾN!",
@@ -131,6 +132,7 @@ class DauPhapView(discord.ui.View):
         await self.bot.excel_manager.add_exp(w_id, reward_exp)
         await self.bot.excel_manager.add_linh_thach(w_id, reward_lt)
         await self.bot.excel_manager.add_exp(l_id, 500)
+        await self.bot.excel_manager.save()
 
         embed = discord.Embed(
             title="⚔️ TRẬN ĐẤU PHÁP VÕ ĐÀI KẾT THÚC!",
@@ -197,6 +199,7 @@ class CultivationCog(commands.Cog):
         # Gain random EXP between 300 and 800
         exp_gain = random.randint(300, 800)
         updated_player, _ = await self.bot.excel_manager.add_exp(discord_id, exp_gain)
+        await self.bot.excel_manager.save()
 
         current_realm = updated_player.get("Cảnh giới")
         total_exp = updated_player.get("EXP")
@@ -364,6 +367,7 @@ class CultivationCog(commands.Cog):
                 "Cảnh giới": next_realm,
                 "Buff đột phá": 0
             })
+            await self.bot.excel_manager.save()
 
             embed = discord.Embed(
                 title="✨ ĐỘT PHÁ THÀNH CÔNG — THÀNH TỰU ĐẠI ĐẠO! ✨",
@@ -389,6 +393,7 @@ class CultivationCog(commands.Cog):
                     "Cảnh giới": prev_realm,
                     "Buff đột phá": 0
                 })
+                await self.bot.excel_manager.save()
                 embed = discord.Embed(
                     title="💥 TÂM MA QUẤY PHÁ — RỚT CẢNH GIỚI! 💥",
                     description=(
@@ -406,6 +411,7 @@ class CultivationCog(commands.Cog):
                     "EXP": new_exp,
                     "Buff đột phá": 0
                 })
+                await self.bot.excel_manager.save()
                 embed = discord.Embed(
                     title="💥 ĐỘT PHÁ THẤT BẠI — TỔN THẤT TU VI! 💥",
                     description=(
@@ -418,6 +424,7 @@ class CultivationCog(commands.Cog):
                 )
             else:
                 await self.bot.excel_manager.update_player(discord_id, {"Buff đột phá": 0})
+                await self.bot.excel_manager.save()
                 embed = discord.Embed(
                     title="💥 ĐỘT PHÁ THẤT BẠI 💥",
                     description=(
@@ -444,6 +451,8 @@ class CultivationCog(commands.Cog):
         await self.bot.excel_manager.get_or_create_player(discord_id, username)
 
         success, player, msg = await self.bot.excel_manager.check_in(discord_id)
+        if success:
+            await self.bot.excel_manager.save()
 
         if success:
             embed = discord.Embed(
@@ -555,6 +564,7 @@ class CultivationCog(commands.Cog):
         await self.bot.excel_manager.add_exp(discord_id, res["exp"])
         await self.bot.excel_manager.add_linh_thach(discord_id, res["lt"])
         await self.bot.excel_manager.add_item(discord_id, res["item"], 1)
+        await self.bot.excel_manager.save()
 
         embed = discord.Embed(
             title=f"🗝️ KHÁM PHÁ BÍ CẢNH: {res['title']}",

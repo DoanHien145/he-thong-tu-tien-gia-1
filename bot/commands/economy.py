@@ -10,32 +10,32 @@ from bot.logger import logger
 SHOP_ITEMS = {
     # --- LINH ĐAN TU VI & ĐỘT PHÁ ---
     # Nhất Phẩm
-    "Luyện Khí Đan": {"price": 150, "sale_chance": 0.85, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Nhất Phẩm • Cắn đan nhận ngay +300 EXP tu vi"},
-    "Tụ Khí Đan": {"price": 300, "sale_chance": 0.80, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Nhất Phẩm • Gia tăng +20% tỷ lệ đột phá thành công"},
-    "Thanh Tâm Đan": {"price": 450, "sale_chance": 0.75, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Nhất Phẩm • +500 EXP tu vi & +10% Buff đột phá"},
-    "Ngưng Nguyệt Đan": {"price": 600, "sale_chance": 0.70, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Nhất Phẩm • +800 EXP tu vi"},
-    "Hồi Xuân Đan": {"price": 500, "sale_chance": 0.80, "type": "dan", "cat": "phuc_hoi", "desc": "Linh đan Phục Hồi • Hồi phục 100 HP & 100 Mana lập tức"},
+    "Luyện Khí Đan": {"price": 150, "sale_chance": 0.85, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Nhất Phẩm • Yêu cầu Luyện Khí Tầng 1 • Cắn đan +40 EXP tu vi"},
+    "Tụ Khí Đan": {"price": 300, "sale_chance": 0.80, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Nhất Phẩm • Yêu cầu Luyện Khí Tầng 2 • Gia tăng +20% tỷ lệ đột phá"},
+    "Hồi Xuân Đan": {"price": 500, "sale_chance": 0.80, "type": "dan", "cat": "phuc_hoi", "desc": "Linh đan Phục Hồi • Yêu cầu Luyện Khí Tầng 3 • Hồi 100 HP & 100 Mana"},
+    "Thanh Tâm Đan": {"price": 450, "sale_chance": 0.75, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Nhất Phẩm • Yêu cầu Luyện Khí Tầng 5 • +100 EXP tu vi & +10% Buff đột phá"},
+    "Ngưng Nguyệt Đan": {"price": 600, "sale_chance": 0.70, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Nhất Phẩm • Yêu cầu Luyện Khí Tầng 7 • +200 EXP tu vi"},
 
-    # Nhị Phẩm (Yêu cầu Trúc Cơ)
-    "Trúc Cơ Đan": {"price": 1200, "sale_chance": 0.55, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Nhị Phẩm • Cắn đan nhận +1,500 EXP tu vi (Yêu cầu Trúc Cơ)"},
-    "Tẩy Tủy Đan": {"price": 2000, "sale_chance": 0.50, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Nhị Phẩm • Gia tăng +35% tỷ lệ đột phá thành công"},
-    "Thần Hành Đan": {"price": 1800, "sale_chance": 0.55, "type": "dan", "cat": "phuc_hoi", "desc": "Linh đan Trợ Chiến • Tăng tỷ lệ chấn áp Tâm Ma khi gặp lôi kiếp"},
-    "Cốt Sủy Đan": {"price": 2800, "sale_chance": 0.45, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Nhị Phẩm • +2,500 EXP & +15% Buff đột phá"},
-    "Tụ Linh Đan": {"price": 3500, "sale_chance": 0.40, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Nhị Phẩm • +4,000 EXP tu vi"},
+    # Nhị Phẩm
+    "Trúc Cơ Đan": {"price": 1200, "sale_chance": 0.55, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Nhị Phẩm • Yêu cầu Trúc Cơ Sơ Kỳ • Cắn đan +500 EXP tu vi"},
+    "Tẩy Tủy Đan": {"price": 2000, "sale_chance": 0.50, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Nhị Phẩm • Yêu cầu Trúc Cơ Trung Kỳ • Gia tăng +35% tỷ lệ đột phá"},
+    "Thần Hành Đan": {"price": 1800, "sale_chance": 0.55, "type": "dan", "cat": "phuc_hoi", "desc": "Linh đan Trợ Chiến • Yêu cầu Trúc Cơ Hậu Kỳ • Tăng tỷ lệ chấn áp Tâm Ma (+25%)"},
+    "Cốt Sủy Đan": {"price": 2800, "sale_chance": 0.45, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Nhị Phẩm • Yêu cầu Trúc Cơ Đại Viên Mãn • +1,000 EXP & +15% Buff đột phá"},
+    "Tụ Linh Đan": {"price": 3500, "sale_chance": 0.40, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Nhị Phẩm • Yêu cầu Kim Đan Sơ Kỳ • +2,000 EXP tu vi"},
 
-    # Tam Phẩm (Yêu cầu Kim Đan)
-    "Kim Đan Bảo Đan": {"price": 8000, "sale_chance": 0.28, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Tam Phẩm • +8,000 EXP & +50% Buff đột phá (Yêu cầu Kim Đan)"},
-    "Ngũ Hành Linh Đan": {"price": 12000, "sale_chance": 0.25, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Tam Phẩm • +12,000 EXP & +30% Buff đột phá"},
-    "Địa Mẫu Đan": {"price": 16000, "sale_chance": 0.20, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Tam Phẩm • +18,000 EXP tu vi cuồng bạo"},
+    # Tam Phẩm
+    "Kim Đan Bảo Đan": {"price": 8000, "sale_chance": 0.28, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Tam Phẩm • Yêu cầu Kim Đan Trung Kỳ • +3,500 EXP & +30% Buff đột phá"},
+    "Ngũ Hành Linh Đan": {"price": 12000, "sale_chance": 0.25, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Tam Phẩm • Yêu cầu Kim Đan Hậu Kỳ • +5,000 EXP & +20% Buff đột phá"},
+    "Địa Mẫu Đan": {"price": 16000, "sale_chance": 0.20, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Tam Phẩm • Yêu cầu Kim Đan Đại Viên Mãn • +8,000 EXP tu vi"},
 
-    # Tứ Phẩm (Yêu cầu Nguyên Anh)
-    "Nguyên Anh Đan": {"price": 30000, "sale_chance": 0.12, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Tứ Phẩm • Cắn đan +35,000 EXP tu vi (Yêu cầu Nguyên Anh)"},
-    "Chân Long Đan": {"price": 48000, "sale_chance": 0.10, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Tứ Phẩm • +50,000 EXP & +45% Buff đột phá"},
-    "Phượng Hoàng Niết Bàn Đan": {"price": 75000, "sale_chance": 0.08, "type": "dan", "cat": "phuc_hoi", "desc": "Thần đan Tứ Phẩm • +75,000 EXP & Phục hồi toàn bộ HP/Mana"},
+    # Tứ Phẩm
+    "Nguyên Anh Đan": {"price": 30000, "sale_chance": 0.12, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Tứ Phẩm • Yêu cầu Nguyên Anh Sơ Kỳ • Cắn đan +15,000 EXP tu vi"},
+    "Chân Long Đan": {"price": 48000, "sale_chance": 0.10, "type": "dan", "cat": "tu_vi", "desc": "Linh đan Tứ Phẩm • Yêu cầu Nguyên Anh Trung Kỳ • +25,000 EXP & +35% Buff đột phá"},
+    "Phượng Hoàng Niết Bàn Đan": {"price": 75000, "sale_chance": 0.08, "type": "dan", "cat": "phuc_hoi", "desc": "Thần đan Tứ Phẩm • Yêu cầu Nguyên Anh Hậu Kỳ • +40,000 EXP & Phục hồi toàn bộ HP/Mana"},
 
-    # Ngũ Phẩm (Yêu cầu Hóa Thần)
-    "Hóa Thần Đan": {"price": 150000, "sale_chance": 0.04, "type": "dan", "cat": "tu_vi", "desc": "Thượng Cổ Thần Đan • +150,000 EXP & +60% Buff đột phá (Yêu cầu Hóa Thần)"},
-    "Thái Sơ Hóa Đan": {"price": 350000, "sale_chance": 0.02, "type": "dan", "cat": "tu_vi", "desc": "Chí Tôn Chí Bảo • +300,000 EXP & +75% Buff đột phá (Yêu cầu Hóa Thần)"},
+    # Ngũ Phẩm
+    "Hóa Thần Đan": {"price": 150000, "sale_chance": 0.04, "type": "dan", "cat": "tu_vi", "desc": "Thượng Cổ Thần Đan • Yêu cầu Hóa Thần Sơ Kỳ • +80,000 EXP & +50% Buff đột phá"},
+    "Thái Sơ Hóa Đan": {"price": 350000, "sale_chance": 0.02, "type": "dan", "cat": "tu_vi", "desc": "Chí Tôn Chí Bảo • Yêu cầu Hóa Thần Trung Kỳ • +150,000 EXP & +60% Buff đột phá"},
 
     # --- DƯỢC LIỆU & NGUYÊN LIỆU ---
     # Nhất Phẩm
@@ -321,6 +321,7 @@ async def claim_all_quests_for_user(bot, discord_id: str, username: str) -> tupl
     await bot.excel_manager.add_linh_thach(discord_id, total_lt)
     for item, qty in items_added.items():
         await bot.excel_manager.add_item(discord_id, item, qty)
+    await bot.excel_manager.save()
 
     updated_player = await bot.excel_manager.get_player(discord_id)
     items_str = ", ".join([f"`{qty}x {item}`" for item, qty in items_added.items()])
@@ -363,6 +364,23 @@ class NhanTatCaNhiemVuView(discord.ui.View):
             await interaction.response.edit_message(embed=embed, view=self)
         else:
             await interaction.response.send_message(embed=embed, ephemeral=True)
+
+class BaoCacShopView(discord.ui.View):
+    def __init__(self, cog: "EconomyCog"):
+        super().__init__(timeout=300)
+        self.cog = cog
+
+    @discord.ui.button(label="🧪 Mua Hết Đan", style=discord.ButtonStyle.primary, custom_id="shop_buy_dan")
+    async def buy_all_dan(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.cog.execute_batch_buy(interaction, target_cat="dan")
+
+    @discord.ui.button(label="🌿 Mua Hết Dược Liệu", style=discord.ButtonStyle.success, custom_id="shop_buy_duoc")
+    async def buy_all_duoc(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.cog.execute_batch_buy(interaction, target_cat="duoc")
+
+    @discord.ui.button(label="🛒 Mua Càn Quét Tất Cả", style=discord.ButtonStyle.secondary, custom_id="shop_buy_all")
+    async def buy_all_everything(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.cog.execute_batch_buy(interaction, target_cat="all")
 
 class EconomyCog(commands.Cog):
     def __init__(self, bot):
@@ -423,23 +441,18 @@ class EconomyCog(commands.Cog):
         m, s = divmod(remaining, 60)
         return f"{m}m {s}s"
 
-    @app_commands.command(name="shop", description="Xem Bảo Các Tông Môn — Cửa hàng Linh Đan & Nguyên Liệu (Thiết kế mới dễ nhìn)")
-    async def shop(self, interaction: discord.Interaction):
-        if self.bot.channel_id and interaction.channel_id != self.bot.channel_id:
-            await interaction.response.send_message("❌ Lệnh này chỉ hoạt động trong kênh tông môn quy định!", ephemeral=True)
-            return
-
-        discord_id = str(interaction.user.id)
+    def generate_shop_embed(self, user_id: str) -> discord.Embed:
         self.refresh_shop_if_needed()
         reset_time = self.get_time_until_reset()
-        user_bought_map = self.user_purchases.get(discord_id, {})
+        user_bought_map = self.user_purchases.get(user_id, {})
 
         embed = discord.Embed(
             title="🏪 BẢO CÁC TÔNG MÔN — KHO VẬT PHẨM VẬN MAY",
             description=(
                 "✨ **Bảo Các vừa nhập đợt hàng mới!**\n"
                 "🔒 **Quy định**: Mỗi tu sĩ chỉ mua **tối đa 2 cái/món** mỗi đợt 5 phút.\n"
-                "💎 **Mua hàng**: `/mua [tên_vật_phẩm] [số_lượng]`\n"
+                "💎 **Mua lẻ**: `/mua [tên_vật_phẩm] [số_lượng]`\n"
+                "👇 **Nút Mua Hết**: Nhấn các nút bên dưới để càn quét nhanh **Đan** hoặc **Dược Liệu**!\n"
                 f"⏱️ **Đổi đợt hàng sau**: `{reset_time}`"
             ),
             color=discord.Color.gold()
@@ -474,6 +487,117 @@ class EconomyCog(commands.Cog):
             )
 
         embed.set_footer(text=f"Bảo Các Tông Môn • Tự làm mới kho ngẫu nhiên mỗi 5 phút (Còn: {reset_time})")
+        return embed
+
+    @app_commands.command(name="shop", description="Xem Bảo Các Tông Môn — Cửa hàng Linh Đan & Nguyên Liệu")
+    async def shop(self, interaction: discord.Interaction):
+        if self.bot.channel_id and interaction.channel_id != self.bot.channel_id:
+            await interaction.response.send_message("❌ Lệnh này chỉ hoạt động trong kênh tông môn quy định!", ephemeral=True)
+            return
+
+        discord_id = str(interaction.user.id)
+        embed = self.generate_shop_embed(discord_id)
+        view = BaoCacShopView(cog=self)
+        await interaction.response.send_message(embed=embed, view=view)
+
+    async def execute_batch_buy(self, interaction: discord.Interaction, target_cat: str):
+        if self.bot.channel_id and interaction.channel_id != self.bot.channel_id:
+            await interaction.response.send_message("❌ Lệnh này chỉ hoạt động trong kênh tông môn quy định!", ephemeral=True)
+            return
+
+        discord_id = str(interaction.user.id)
+        username = interaction.user.display_name
+
+        self.refresh_shop_if_needed()
+        reset_time = self.get_time_until_reset()
+
+        player = await self.bot.excel_manager.get_or_create_player(discord_id, username)
+        current_lt = int(player.get("Linh thạch") or 0)
+
+        cat_names = {
+            "dan": "Linh Đan",
+            "duoc": "Dược Liệu & Nguyên Liệu",
+            "all": "Tất Cả Vật Phẩm"
+        }
+        target_name_str = cat_names.get(target_cat, "Vật Phẩm")
+
+        if current_lt <= 0:
+            await interaction.response.send_message(f"❌ Bạn không có Linh Thạch nào để mua {target_name_str}!", ephemeral=True)
+            return
+
+        user_bought_map = self.user_purchases.setdefault(discord_id, {})
+
+        total_cost = 0
+        total_items_bought = 0
+        bought_details = []
+
+        for item_name, item_info in list(self.shop_stock.items()):
+            item_type = item_info.get("type", "dan")
+            item_cat = item_info.get("cat", "tu_vi")
+
+            if target_cat == "dan":
+                if not (item_type == "dan" or item_cat in ["tu_vi", "phuc_hoi"]):
+                    continue
+            elif target_cat == "duoc":
+                if not (item_type == "nguyen_lieu" or item_cat == "duoc_lieu"):
+                    continue
+
+            already_bought = user_bought_map.get(item_name, 0)
+            per_user_max = min(2, item_info["max_stock"])
+            rem_user_limit = max(0, per_user_max - already_bought)
+            rem_stock = max(0, item_info["stock"])
+
+            qty_wanted = min(rem_user_limit, rem_stock)
+            if qty_wanted <= 0:
+                continue
+
+            price = item_info["price"]
+            qty_affordable = current_lt // price
+            qty_buy = min(qty_wanted, qty_affordable)
+
+            if qty_buy <= 0:
+                continue
+
+            cost = qty_buy * price
+            current_lt -= cost
+            total_cost += cost
+            total_items_bought += qty_buy
+
+            item_info["stock"] -= qty_buy
+            user_bought_map[item_name] = already_bought + qty_buy
+            await self.bot.excel_manager.add_item(discord_id, item_name, qty_buy)
+            bought_details.append(f"• **{item_name}**: `{qty_buy}x` — `{cost:,}` 💎")
+
+        if total_items_bought == 0:
+            await interaction.response.send_message(
+                f"❌ Bạn không thể mua thêm **{target_name_str}** nào trong đợt này!\n"
+                f"💡 Có thể do kho đã hết hàng loại này, bạn đã đạt giới hạn đợt (2 cái/món), hoặc Linh Thạch hiện tại không đủ mua món nào.\n"
+                f"⏱️ Đợt hàng mới sẽ về sau `{reset_time}`.",
+                ephemeral=True
+            )
+            return
+
+        await self.bot.excel_manager.add_linh_thach(discord_id, -total_cost)
+        await self.bot.excel_manager.save()
+
+        record_activity(discord_id, "mua_shop", self.bot)
+        record_activity(discord_id, "mua_hang", self.bot)
+        record_activity(discord_id, "mua", self.bot)
+
+        updated_player = await self.bot.excel_manager.get_player(discord_id)
+        rem_lt = updated_player.get('Linh thạch', current_lt)
+
+        embed = discord.Embed(
+            title=f"🛒 Mua Càn Quét [{target_name_str}] Thành Công!",
+            description=(
+                f"🎉 **{player.get('Tên')}** đã tiêu **{total_cost:,} Linh Thạch** 💎 mua **{total_items_bought} món {target_name_str}**!\n\n"
+                f"📦 **Chi tiết mua hàng**:\n" + "\n".join(bought_details) + "\n\n"
+                f"💎 Linh thạch còn lại: `{rem_lt:,}` 💎\n"
+                f"🎒 Các vật phẩm đã được cất vào `/tui_do`!\n"
+                f"⏱️ Đợt hàng tiếp theo: `{reset_time}`"
+            ),
+            color=discord.Color.green()
+        )
         await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name="mua", description="Mua Linh Đan hoặc Nguyên Liệu từ Bảo Các Tông Môn")
@@ -569,6 +693,7 @@ class EconomyCog(commands.Cog):
 
         await self.bot.excel_manager.add_linh_thach(discord_id, -total_cost)
         await self.bot.excel_manager.add_item(discord_id, matched_item, so_luong)
+        await self.bot.excel_manager.save()
 
         updated_player = await self.bot.excel_manager.get_player(discord_id)
 
@@ -673,6 +798,7 @@ class EconomyCog(commands.Cog):
 
         await self.bot.excel_manager.add_exp(discord_id, reward_exp)
         await self.bot.excel_manager.add_linh_thach(discord_id, reward_lt)
+        await self.bot.excel_manager.save()
 
         embed = discord.Embed(
             title=f"⚔️ TẤN CÔNG BOSS THIÊN MA! ⚔️",
